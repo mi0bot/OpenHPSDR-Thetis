@@ -3698,7 +3698,7 @@ namespace Thetis
                     break;
 
                 case EButtonBarActions.eBBCentreDisplay:           // centre the display
-                    btnDisplayPanCenter_Click(null, null);
+                    PanCentre();
                     break;
 
                 case EButtonBarActions.eBBZoomStep:                // step between the zoom step buttons
@@ -3977,8 +3977,7 @@ namespace Thetis
             // MI0BOT: Make the panel based on mode of the current transmit VFO
             DSPMode currentMode;
 
-            if (Console.getConsole() != null &&
-                Console.getConsole().CurrentHPSDRModel == HPSDRModel.HERMESLITE)
+            if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)
             {
                 if (chkVFOBTX.Checked)
                     currentMode = RX2DSPMode;

@@ -1,32 +1,70 @@
-This is the Thetis version for the Hermes Lite 2.
+**UPDATE: The CW issue has been resolved for Protocol 2. It requires a firmware update and this modified version of Thetis. Please see the [ApacheLabs community forums here](https://community.apache-labs.com/viewtopic.php?f=32&t=4972)**
 
-Please report any bugs on [GitHub here](https://github.com/mi0bot/OpenHPSDR-Thetis/issues/new/choose).
+**Note: You can revisit these release notes by using the button inside the About box**
 
-# v2.10.3.8
-WARNING - This release requires a rebuild of the database if you are upgrading 
-from 2.10.3.6. 
+Please report any issue over on [GitHub here](https://github.com/ramdor/Thetis/issues/new/choose).
 
-- Fixed Mic control issue
-- Increased receiver Attenuate to full range, 32dB max attenuation
-- Updated code base to latest official code
-- Enabled software side-tone
-- Fixed issue with lock-up with no I/O Board installed
+## Join us on Discord for active test builds and much more : [Click Here](https://discord.gg/6fHCRKnDc9)
 
-####################################### Official Thetis Release Notes ###################################################
 
-## v2.10.3.9 development - Change Log
-- [add] [or decreased] option added to "Force ATT on Tx to 31 when Drive or Tune power is increased and PS-A is on"
-- [add] tool tips added to fields and options in the linearity form
+## v2.10.3.10 - Change Log
+- [add] flash new TCI spots option in Setup->Serial/Network/MidiCat->Network. Spots that are <2 mins old will flash. Hovering over them will stop the flashing
+- [add] added ^o- symbols to anan meter needle, and signal text meter to represent reading source. (^-=sig o=sig avg, ^=max fft bin)
+- [fix] fix rare 'object in use' error with pretty tracker (scroll bars in UI)
+- [fix] fixed ChannelMaster.dll version issue. Increase version to v1.0.1.0 which should resolve install issues where ChannelMaster.dll was not being overwritten
+- [fix] fixed CW sidetone (MON) issue where it would turn off if mode was changed
+
+## v2.10.3.9 - Change Log
+- [add] an [or decreased] option added to "Force ATT on Tx to 31 when Drive or Tune power is increased and PS-A is on"
+- [add] many tool tips added to fields and options in the linearity form
 - [add] many tool tips added to DSP setup form
-- [add] software sidetone option added. New options in Setup->DSP->CW. Audio via cmASIO + VAC
+- [add] software sidetone option added. New options in Setup->DSP->CW. Audio via cmASIO + VAC. Note: this only works from cwx form and external rts/cts cw switching
 - [add] tx filter edge colour for the filter view item
-- [add] show/hide option for frequency numbers in Setup->Appearance->RX Display->Text
+- [add] show/hide option for grid frequency numbers in Setup->Appearance->RX Display->Text
 - [add] options to show/hide major/minor grid lines in Setup->Appearance->RX Display
+- [add] option to show two tone measurements in the linearity form. Note: suitable spectrum scale etc required. Code attempts to find peaks at expected locations
+- [add] added fft size display to the rx display settings
+- [add] Red-Pitaya radio model. Specific modifications for that hardware
+- [add] PSForm tooltips now used in finder
+- [add] palette option added for TX waterfall
+- [add] custom waterfall palette added for RX and TX
+- [add] gradient added for TX panadaptor
+- [add] datafill colour/alpha, and dataline alpha added for TX panadaptor
+- [add] low colour added to tx waterfall
+- [add] custom meter bar for use with % variables, min/max/high/title/units
+- [add] ui popups during the wdsp wisdom00 file generation. Also notified if wisdom file is older than 3 months at startup
+- [add] FPS profiler in Setup->Tests. Use on a fresh database, with just region, model, and ip configured, so that you can connect + power up the radio through Thetis. Leave window position/size and do not change any settings
+- [add] options to cache WDSP filter impulse data in Setup-DSP. Can also store this data to a .dat file. Read the tool tips. Improves mode switch speed and Thetis start up time
+- [add] tci spot message now supports far more modes
+- [add] defaults and 'stealth' mode for two tone frequencies in setup->tests
+- [add] pause button in the info bar buttons to pause the display. The radio etc will continue when paused, noise floor calculations will not
+- [add] pulsed/pecker tune available in Setup->Transmit
+- [add] pulsed/pecker two tone available in Setup->Test
+- [add] options to prevent sleep/screen saver in Setup->Options->Options2
+- [add] top line of meter/gadget notes are used in the dropdown list to make identification easier
+- [add] signal meter based on peak bin in the passband to mirror Simon Brown's implementation in SDRconsole. %signal_max_bin% for text overlay. Note: notches are not considered
+with this meter
+- [add] if an ALT key is held at startup 'auto launch at startup' will be bypassed. This will prevent apps from auto launching if configured to do so
+- [add] fpga and p2app version shown in titlebar and setup if using a G2 with p2app v39 or later
+- [add] a TCI spot message can provide additional info via json data. Cluster-TCI-Bridge by OE3IDE supports this currently. Details here here : https://github.com/ramdor/Thetis/commit/6174cac4863848b61dfe925016ea32c1fcbb100a
+- [add] additional info is shown on a TCI spot popup if available
+- [add] CTRL+right click on a TCI will show the related HamQTH page. Right click will show QRZ, this is unchanged
 - [change] exporting a tx profile will now ask for destination location and filename. It will complain if filename already exists
 - [change] restored step attenuator RX1 if HERMES is used. Unsure why I disabled it a few years ago
-- [change] the bespoke TCI command tx_frequency has changed back to the following as per the TCI protocol, tx_frequency:3700000; . There is now a bespoke Thetis message also sent out at the same time, tx_frequency_thetis:3700000,b80m,false,false;
+- [change] the bespoke TCI command Tx frequency has changed back to the following as per the TCI protocol, tx_frequency:3700000; .There is now a bespoke Thetis message also sent out at the same time, tx_frequency_thetis:3700000,b80m,false,false;
 - [change] refactor serial port pin change detection code for slight performance improvements
 - [change] display vsync defaulted to on for new databases. I would advise turning this on if not already
+- [change] all RX display offsets are now done in one place in the code
+- [change] TX-ATT label has been changed to [S-ATT]
+- [change] spectrum gradient change. Now -150 to +10 dBm.  NOTE: all gradients will need to be adjusted
+- [change] cursor/peak readout colours moved to Appearance-General
+- [change] float precision maintained for display/meter calibration offsets
+- [change] limit setPan to filter item display spectrum to 1/8 of framerate (~266ms update interval when vfo is changing the spectrum pan)
+- [change] refactored midi wheel code to try and remove the lag when spinning a wheel very fast. Slider/knob will still have same issue. Behringer devices PL-1/Micro/etc do not use this new code
+- [change] rx filter can now be +-20kHz wide to mirror TX filter widths. Shift also needs to be set as that will (at the moment) imply a width limit
+- [change] WDSP has had some optimisations and caching added. For example if you change the filter size to something that has been calculated before it will be much faster the second time. Has improved start up time, mode switching etc etc.
+- [change] WDSP updated to version 1.26. 
+- [change] meter/gadget containers changes so that each can be set to use rx1 or tx2 data (future proofing)
 - [fix] mic disable/enable button on front end will now disable the mic at startup if set as off. Note: its state is saved as part of the tx profile
 - [fix] fixed rare out of bounds issue in memory ScheduleUpdate
 - [fix] cat IF command fix where an error (O;) message would be returned if an unsupported TuneStep was in use. This bug has existed since 25/02/2007
@@ -44,6 +82,23 @@ from 2.10.3.6.
 - [fix] fix for tcpip cat server where if a multiple cat message arrived, then only the first would be processed
 - [fix] simulated tci spot clicks using bespoke TCI message [spot_simulate_click] now also sends out [rx_clicked_on_spot] defaulted to rx1 and vfoa
 - [fix] when adcs were linked, unwinding of adc overload attenuation did not always return to original att
+- [fix] PS SetPk reset if user selects different radio model
+- [fix] rx2 sql thumb control now aligns with signal displayed below
+- [fix] VAC2 on/off state is recovered from the TX profile when rx2 is enabled
+- [fix] pulse on waterfall has been minimised when using NF compensation with the waterfall AGC
+- [fix] cwu above 10mhz will now be used by tciserver on restart if configured to do so
+- [fix] s-att/att state will behave as expected when the adcs are linked, and rx2 was previously saved with a different state to rx1. If the adc's are linked then RX2 will use setting from RX1
+- [fix] antenna button box now uses tx band to determine antenna. Now operates as expected when running a x-band transmit
+- [fix] issue where WWV was selected when in a ham band the associated selected rx antenna would not be shown correctly in the antenna button box when the switch to the WWV was made
+- [fix] a RedPitaya 'work around' has been added to fix issue where tx attenuation had no effect. It seems the RP firmware needs RX attenuation to be adjusted, unlike the Anan's etc. Note: Radio Model needs to be Red Pitaya for this to take effect
+- [fix] infrequent access violation and crash/shutdown prevented when enabling and disabling VACs via TCI (line_out command) or CAT (ZZVA)
+- [fix] vfo band text now updated when frequency changes for the multimeter vfo item. Note: rate limited to 250ms unlike legacy meter
+- [fix] rx2 mnf position now correctly located when in panadaptor view
+- [fix] fix issue that could cause repeated errors in mmio when a key is not found, perhaps caused by old db
+- [fix] outbound mmio queue fix for data node, data out queues are not saved to db, and limits have been placed on max queue size
+- [fix] fixed issue where rotator control item would sometimes miss the stop command on click. Note. mouse up+down will trigger this when the red circle is shown
+- [fix] fixed issue where an rx1 container with a vfo item would sometimes display the incorrect band for vfoB
+- [fix] frequency calibration now waits for the spectrum to build before taking readings. This is based on fft size and sample rate. For example, the delay for 48k sample and 262144 sample size is ~5.5 seconds
 
 ## v2.10.3.8 - Change Log
 - [fix] maintain delta checkbox now greyed if adjust min to noise floor is unchecked
@@ -78,7 +133,7 @@ from 2.10.3.6.
 	- duplex mode is used for these displays, duplex off will not be provided
 	- show filter characteristic option in Setup->DSP->Options that will show the actual filter characteristics
 	- uses new spectrum duplication system from Warren
-- [add] right click setup menu item from the menubar will show setup instantly. To prevent all those repetitive strain injuries and to free up the doctors ! ;)
+- [add] right click setup menu item from the menu bar will show setup instantly. To prevent all those repetitive strain injuries and to free up the doctors ! ;)
 - [add] added -nospec command line option to prevent the use of analysers when the filter item is in use
 - [add] webimage item can now be configured to apply the image to the spectral area, and can be used to implement slide shows with the use of 4charID
 - [add] right click on a CTUN button will re-centre the associated rx
@@ -143,4 +198,273 @@ from 2.10.3.6.
 - [fix] zorder fighting issues with bandstack overlays and other drag items resolved
 - [fix] high frequency TCI spots from Qo100 for example should now show in the correct place
 - [fix] closing wb will return BPF bypass state correctly if multiple wb menu presses are made and the window is closed
+
+## v2.10.3.6 Main New Features
+- database manager
+- many new meter items, including rotator, band/filter/mode/antenna button boxes, text overlay and led indicator, much much more
+- vfo meter item control now has user interactive elements
+- new multimeter/data IO system
+- some legacy UI items can be removed. This will be extended in the future
+- improvements to NR2 including trained machine data
+- coordinate system for multimeters to align things easier
+- kenwood broadcast data options for cat1-4/tcpip cat
+- autostart applications
+- diversity memories
+- additional midi and cat options/commands
+- fn keys for cwx, including options to not need window focus
+- cmASIO, including P1 & P2 support, for low latency audio
+- an about box finally arrives
+- endless bugs fixed and improvements throughout
+- lots more, see full change log below
+
+## v2.10.3.6 Change Log
+- [add] total re-work of database management. There is now a database manager. I advise you to watch video : https://youtu.be/pwe3bd-tkGY
+- [add] rotator can now be stopped. Hover mouse over arrow pivot point to see red circle. Click in circle and STOP will be sent. Note: reset the pstRotator commands if you are already using before this update
+- [add] cache bypass option added to web image meter item
+- [add] you can now select VFOA, VFOB or BOTH in the multimeter vfo control
+- [add] auto height options for multimeter containers
+- [add] cwx form does now not need focus to act on F1-F12 etc. Uncheck focus to enable this in the cwx form
+- [add] rotator can now have a map. Check out OE3IDE's skin server pages
+- [add] new button box meter controls for bands, modes and filters
+- [add] rotator can now have the beam width alpha adjusted
+- [add] right click a band in a band button box, and it will popup bandstack for that band for rx1 only. Right click on filter to show filter popup, rx1+2
+- [add] antenna switch box meter item
+- [add] %precis=N% can be used on text overlay so specify precision for any floating point variable on that line. %precis=2%%signal_strength%  will show -73.49 for example
+- [add] small digits colour for vfo item
+- [add] new legacy items tab in setup->Appearance->Legacy Items to hide some of the old legacy items. This will be added to over time
+- [add] vfo meter item option can ne used to show band text
+- [add] some new variables added to text overlay, including band text for vfoa/b, noise floor for rx1/2, tune step text, pa profile text. Hover mouse over the I in the text overlay settings
+- [add] NR2. Additional setting T2 that will aid with weaker signal clarity when using Trained model. Lower setting of T2 will prevent blocking of very weak signals at the cost of a slight increase in noise. -NR0V
+- [add] added lock+vfo sync to vfo meter items. Colour can be changed for these in options
+- [add] cords are displayed on meter container drag/resize. Use ctrl to lock to 10 pixel steps when moving/resizing for easier alignment
+- [add] long mouse click (>= 1 second) on a kHz value in a vfo control will show tune step options, much like an Icom
+- [add] long mouse click (>= 1 second) on the rx1 band vfoA in a vfo control will show bandstack
+- [add] new tune step button box as a meter item
+- [add] new history graph item to show data over time
+- [add] Led Indicator meter item - use variables in c# style code to provide a Boolean expression for the indicator  eg  %swr% > 2.0  or  %split% == "SPLIT"
+- [add] Added enable G2 panel; not enabled if Andromeda panel enabled and vice versa Added button actions for band selection - G8NJJ
+- [add] ability to create default G2 settings - G8NJJ
+- [add] band selector on the vfo display in multimeters. Just click the band text
+- [add] filter selector on the vfo display in multimeters. Just click the filter text
+- [add] mode selector on the vfo display in multimeters. Just click the mode text
+- [add] vfo display multimeter now allows changing values by hovering over them and spinning the mouse wheel, click to inc/dec, digit keys can be pressed
+- [add] TCPip client and serial connectors added to MultiMeter I/O (see videos listed a few items below)
+- [add] web image meter item - pull images from the internet and display in a meter container
+- [add] minimise option for containers. Default will vanish when thetis console is minimised
+- [add] MultiMeterIO - get external data - use it in the MultiMeter system. Watch video : https://youtu.be/oYRrm8YpD24
+- [add] new meter item, Rotator. Requires a data feed using the new Multi Meter io. : https://youtu.be/1LmUromJQNQ
+- [add] new MultiMeter spacer. Many can be added to pad things out. rx/tx colour and fade options
+- [add] colour picker for TX-ATT control background in appearance->general
+- [add] new MultiMeter item, Text Overlay. Can be used for various display tasks. Many can be added. Short video here : https://youtu.be/LPREPkJhaKY?si=6RxWujVnbqvsdWpd
+- [add] .bat files now supported by autostarter
+- [add] output AI (kenwwood broadcast info) over cat1/2/3/4/tcpipcat options
+- [add] option in setup for S9 @ -73 or -93 for 30MHz and 144MHz (github #418)
+- [add] options added for SWR protection. Swr limits, and tune power (github #221)
+- [add] zzoa and zzoc cat commands have been added. zzoa - get/set the rx antenna based on rx1 band. zzoc - get/set the tx antenna based on tx band (github #385)
+- [add] rx antenna port selection option for XVTR. It should also revert any changes if you leave an xvtr band. Only applies to RX1 currently (github #424)
+- [add] 8 diversity memories. shift click to store, ctrl click to clear (github #263)
+- [add] zzxa cat command to get/set audio amplifier (rear speaker sockets). zzxa1; to enable, zzxa0; to disable (github #308)
+- [add] midi button command to toggle audio amplifier (rear speaker sockets) (github #308)
+- [add] notes field in multimeter container. They are also used in the titlebar of the containers (github #104)
+- [add] new start up options tab in setup. Now includes options to open specific forms at start up, and programs/exes (GitHub #286)
+- [add] option to prevent ps from bypassing the bpfs (GitHub #413)
+- [add] CW Edge Length: This is currently only for the ANAN-G2. The ability to load CW edges into the firmware of the legacy ANAN products is not available. The minimum Edge Length is 15ms which, based upon testing, is required to meet the new ARRL Guidelines.  However, due to the edge shape, a 15ms total edge yields about 5ms in the range of 10% - 90% amplitude, i.e., the 15ms number is a bit misleading.
+- [add] New NR features: (1) the "Trained" gain method as described below, (2) an alternative Noise Power Estimation method called "NSTAT" which should have a faster response to changing noise levels, and (3) code added in the AE Filter that removes an annoying rumble that could occasionally occur.
+- ["Trained"] The new "Trained" NR has a file (zetaHat.bin). It is a data file that contains the essential information extracted from "training" the algorithm. The algorithm is currently "trained" with about 72 hours of noise and speech recordings. The file may, at some point, be replaced or augmented if different training is required.
+- [add] Fn keys now activate messages directly in the cwx form
+- [add] support for command line arguments in the auto program launch settings
+- [add] warning message shown when the bypass of BPFs is ignored for PureSignal transmissions
+- [add] -help command line option
+- [add] option to auto turn off the radio when DB manager is requested to help users that have the power button unavailable. (collapsed view, no top tools and use autostart)
+- [add] shift left click on SPLIT in the vfo will toggle QSPLIT, only when rx2 is off
+- [add] hold shift when clicking setup from the menu strip to show setup. Especially useful if one extra mouse click is too much for you
+- [add] support for tci msg line_out_start:0;  line_out_stop:0;    which have been repurposed to control vac1 on/off, support for tci msg line_out_start:1;  line_out_stop:1;   which have been repurposed to control  vac2 on/off
+- [add] show container on rx/tx options
+- [add] lock container to prevent removal, and to prevent add/remove of items. You can still adjust items
+- [add] dark mode option added to BsdWorld urls in Web Image item
+- [add] use command line option -cmasioconfig to add a new cmasio tab to audio setting. Remove old cmasio settings from the registry if you want to use this feature as they have moved. See notes in the tab
+- [add] option in led indicator to stop tx if conditions met
+- [add] mmio variable now use %precis=N% in text overlay
+- [add] about box. It will also check GitHub for updated versions
+- [add] cmASIO now supports Protocol 1. Note: performance may not match that of the Protocol 2 implementation
+- [change] when using [extended] Thetis will now allow tx anywhere. It will select the nearest band to the frequency you have selected and use that band info for bpf/lpfs. This will now permit power output on 8m for example. If you use this feature be aware of the out of band transmission possibilities and potential issues for the hardware
+- [change] meter container borders have been reduced
+- [change] importing a db with meter containers will no longer clear existing ones, they will be added if possible
+- [change] containers no longer store/convert all skin meter images, only the ones required for that specific container. Considerable memory savings
+- [change] filter setup form now stores/recalls location
+- [change] Button actions processed more simply when G2 enabled (no shift action etc) - G8NJJ
+- [change] rotator meter item now can be shown in az/ele/both mode. Requires you to remove-add the rotator if you were using it
+- [change] can now have up to 50 multimeter containers
+- [change] multimeter meter items are not limited. You can have unlimited in use at a time in a single container
+- [change] midi micgain now is full range -40 to 10 (default mic gain)
+- [change] midi comp is now full range 0-20
+- [change] midi rit - now hold shift when turning for smaller change ~ -250 to 250
+- [change] renamed the [HPF/BPF ByPass on PS] button in code so that a blanket default of ON will be applied everywhere to everyone. Change the setting if required
+- [change] forced the bpfs bypass check to be on as default
+- [change] simplification improvements to db import
+- [change] noise floor approximation now enters 'fast attack' mode more frequently for quicker floor detection (changing modes/antennas/etc)
+- [change] the dB shift setting for AGC auto noise floor compensation is now a true shift from NF. You will probably need to tweak your previous setting
+- [change] the shutdown log is defaulted off. Use command line param -logshutdown to cause Thetis to create a shutdown_log.txt file if you are having shutdown issues which can then be sent in for analysis
+- [change] re-worked minimise/restore code for meter containers
+- [change] variable cw edge length has been disabled in the Dsp-CW settings (only utilised by the G2). This is now fixed at 9ms for the DL1YCF CW edge
+- [change] right axis on history chart is not shown if not used
+- [change] -help text adjusted for the new -dbid flag
+- [change] spectrum and grid directX renderers now use directX clip to limit draw items such as line. Previously LOTS of IF statements were used. For a 2000 pixel wide spectrum, at 60fps, it is a saving of over 720,000 IF statements per second, per receiver, and has been replaced by a single directX clip statement. It also fixes the line that used to draw at the bottom of the spectrum if data was below the low limit, and also fixes some rx2 items moving into the rx1 space
+- [change] bypass vac will only get applied in PollPTT loop if needed (for both mic and vox)
+- [change] 4char is not updated when IP/Port is changed
+- [fix] fix issue where you could not remove tx profile entries if they only had case changes in their name, such as ABc and abc
+- [fix] import of container locations now works when importing a database
+- [fix] fixed issue where a meter container would re-appear if console was minimised and then restored and that container had been docked at some point
+- [fix] exporting a tx profile no longer exports schema for non tx profile tables
+- [fix] fixed issue where a bandstack entry could be duped if ignore dupe was turned on after there were duplicated frequencies in the stack already
+- [fix] dragging a container on the RX# in the titlebar would cause a jump/offset from the mouse pointer
+- [fix] band change is prevented in most cases when in the middle of TX. Split/Swap/TX is not prevented, so beware
+- [fix] rx att + tx att was being used in dup display, leading to incorrect display. Fixed
+- [fix] comp meter when used in rx2 shows the correct rx1 values
+- [fix] fixed issue with %vfoasub% showing at incorrect states
+- [fix] fixed autostart process flag issue that caused DDUtil_v3 to start incorrectly
+- [fix] fixed issue at startup or where diversity form is initially shown where no gain is applied if the gain is locked. This would be noticeable with the 'control dot' being centred. Many other fixes in the diversity system
+- [fix] fixed issue where 'bad' characters in an autostarter path would cause a crash at start up
+- [fix] fixed issue where AGC gains would not be stored correctly and/or could be spread to other bands if different agc modes (slow/med/long etc) were configured for use on those bands
+- [fix] fixed issue introduced with the re-work of tx-att in dev_4. The spectrum when tx'ing with duplex enabled is now adjusted by the tx attenuation.
+- [fix] small change to auto start exe code to fix issue with command line args
+- [fix] decouple of the rx1/rx2 attenuator preamp/s-att boxes from tx-att. New tx-att control, and bg colour settings in appearance (github #399)
+- [fix] multimeters would sometimes not bottom to low values out when power off, and other rare occurrences. Now resolved
+- [fix] changes to fix issue #407, No TX output when initially going to QSK
+- [fix] TCI spot would be incorrectly shown if it came from RumLog. Thetis now ignores as string of "nil" which RumLog sends (version dependant)
+- [fix] attempt to resolve issue where out of array bounds errors are shown at startup
+- [fix] corrected character display issues in input/output combo boxes (Issue #420)
+- [fix] websocket protocol close frame message is now sent when TCIserver disconnects a client, preventing some third-party clients from closing improperly
+- [fix] reworked TCIserver input message buffer to prevent random client disconnects when TCI WebSocket messages arrive rapidly
+- [fix] vac mic audio source can now be recorded
+- [fix] split TXing out of a ham band will no longer disable split when extended mode is used. Note: 'Prevent TX when on different band to RX' option will be used if enabled and TX band has been moved for bandpass/lpf purposes (ie when tx'ing on 11m)
+- [fix] output power on ANT ports configured as RX only should be resolved. Requires an update to your firmware. See the [ApacheLab community forums here](https://community.apache-labs.com/viewtopic.php?f=32&t=4972)
+- [fix] fix missing legacy buttons that happened in rare cases
+- [fix] fixed mode/band menu items shown in expanded view if the collapsed view settings were changed in setup. Very old bug
+- [fix] fixed the display of band/mode buttons in collapsed view that were sometimes visible behind the lower main controls in rare cases
+- [fix] andromeda button bar will hide if setup option is changed. Previously it was behind other controls and could be seen in rare cases on resize
+- [fix] fixed issues where band/mode control would sometimes not show when starting in collapsed view
+- [fix] history left axis would incorrectly limit min to -100.0 on startup
+- [fix] changed legacy spot telnet connect to use UInt16 (unsigned 16 bit) for port number allowing 0-65535. Previously it used signed 16 bit preventing any port over 32767 from being used
+- [fix] fix crash if web image url is adjusted whilst operational
+- [fix] fixes for filters being reset. Previously filter button box would not update
+- [fix] fix issue where if an rx2 container was hidden, other rx2 containers might not show
+- [fix] fixed an issue for rx2 filters, where they would reset to the last used var high/low values
+- [fix] fixed crash when removing MultiMeter I/O TCPClient
+- [fix] backup info stored in associated json is removed with backup is removed. There may be some orphan backup json files left behind from before this fix
+- [fix] when alex is turned off then on antenna config is now sent to hardware
+- [fix] when calibrating level, ctun is turned off if on
+- [fix] when dragging docked meter containers the user control area of the console form would show unpainted areas. The area covered by the container is now instantly repainted when the container moved/resized/hidden
+- [fix] range limits for spectrum and waterfall high/low values. High now cant go below low, and low cant go above high
+- [fix] port limit ranges for tci/cat/n1mm/mmio, of 0-65535
+- [fix] a ToT/led indicator that terminates mox will not key back up instantly if using external keying hardware. It will require PTT to be released first. Fixes #518
+- [fix] 1x1 pixel, or very small images in the web image control would cause thetis to crash/shutdown, fixed
+
+## v2.10.3.5 Change Log
+- [add] midi device DJ2GO2 Touch MIDI is now handled uniquely, and main sliders will have values reversed
+- [add] mox/ptt time out timer functionality in Options2 tab
+- [add] amp view will restore size if set to 'show on startup'
+- [add] new Cat/Midi support for Quick Play/Record by Sigi DH1KLM
+	- ZZQA 1/0 QuickPlay
+	- ZZQB 1/0 QuickRecord
+- [add] new option to apply 31dB tx attenuation when output power is increased and PS-A is on
+- [add] dBm text colour appearance option for noise floor line
+- [add] option to show/hide multimeter containers
+- [add] can now use vsql from andromeda analogue slider window. The sql buttons are now tri state, sqloff, sql, vsql
+- [add] cmASIO feature for 'power users'. See included documentation in the install folder/start menu. Bryan W4WMT
+- [add] cmASIO icon on status bar. Green if ok and in use. Red if there is a problem.
+- [add] someone in red might show up when it snows from now until the 26th Dec
+- [add] option in VAC1 to cause VOX to use MIC instead of VAC
+- [add] option to stop RX1/2 waterfall on TX
+- [add] status bar icons for tci, cat serial, cat tcp/ip, n1mm
+- [add] option in options2 tab to auto power on at startup
+- [add] buttons [=] for RX1/RX2 waterfall and spectrum grid to copy current low/high min/max to all other bands
+- [fix] lin waterfall palettes should now look better
+- [fix] fix an issue which would prevent manually changing TX filter in setup form, it would try to 'validate' whilst typing new value
+- [fix] fix collapsed andromeda sql gain sliders from behaving erratically
+- [fix] thin notches would not clear single pixel carriers from waterfall if visual approximation was used
+- [fix] re-write of the usb-bcd code so that only the device in use is opened/closed as required. Also recovers state at startup
+- [fix] fix issue where if diversity gain/phase locks are on changing band would overwrite the new band with the locked values. Now new band values are applied then locked if needed
+- [fix] menu bar has text size fixed like all other control so size/height does not change with OS text scale. Fixes cut off vfoA/B group box labels
+- [fix] scope time base differences between RX and TX should be resolved
+- [fix] Protocol 1 MAC address now correcly obtained from the discovery packet sent from the radio on port 1024. P1 MAC addy starts at byte 3, not byte 5
+- [fix] fixed an issue that caused the spectral area to be recentred for rx1+rx2 when shift was held to perform a ZTB for RX2
+- [change] TCI now has option to switch to CWU if it receives a CW modulation message and related vfo frequency is at or above 10MHz
+- [change] wav file recording volume is normalised to ignore RX AF. Note: when muted/0vol recording is 'silent'
+- [change] finder will now gather info using multiple threads at a time. Some users were reporting startup time delay
+- [change] skinserver now attempts to select skin when downloaded and shows 'wait' mouse pointer whilst changing
+- [change] sql reworked to fix collapsed view analogue slider issues. Will require you to setup your sql/vsql levels again
+- [change] protocol tri state checkbox changed over to 3 radio buttons, one to select each protocol, and one to select auto
+- [change] vfosync in diversity form now mirrors state at top of main console
+- [change] scope display time is now in ms, and will take that long to fill the width of the view
+- [change] normalising PBSNR now does not adjust noise floor
+- [change] layout adjustments by DK1KLM
+
+## v2.10.3.4 Change Log
+- [add] show on startup options for ampview and linearity/ps window. Set in the linearity/ps window
+- [add] can now ignore 14bit Midi messages. More devices should work. Option in Setup->Serial/Network/Midi CAT->Midi
+- [add] can now combine midi control id, channel and status to be used as the control ID. This should allow devices that share controlIDs for multiple buttons/sliders to work. Options in Setup->Serial/Network/Midi CAT->Midi
+- [add] certain skins might make it snow !
+- [add] option to prevent rx1+rx2 attenuator linking when using diversity. Setting in the diversity form
+- [fix] you can now hear rx2 audio when tx'ing on rx1 and setup->rx2->auto mute rx2 on tx is turned off
+- [fix] mic phase reverse now calling correct function in WDSP, and can be turned on/off
+- [fix] Hercules DJControl Starlight midi device is now better handled. Wheel finger press for example are ignored. If you used this device before you will need to reconfigure as the control IDs will have changed
+- [fix] PortAudio #850 fix included
+- [fix] FM should now use low/high cuts. Carlson's rules used for filter width display in FM rx and tx
+- [fix] Andromeda ModeSpecificForm shouldn't now clear on console resize
+- [fix] scope in TX should now work
+- [fix] spot sun/greyline track should not forget the skin background if track is turned off
+- [fix] ui controls on the multimeter containers should now not get stuck visible
+- [fix] attenuator controls should now not appear above meter containers when coming out of tx
+- [change] tweaks to waterfall agc to minimise screen wide pulse on T/R
+- [change] sepectrum + waterfall low/high step sizes lowered to 5
+- [change] multimeter container no title bar. Now applies even if not pinned. Hold shift and move mouse in the title bar area to bring it up even if hidden
+- [change] removed old noise floor calc method + option from setup form
+- [change] removed old http server as was non operational
+- [change] cosmetic and layout improvements to setup by Sigi DH1KLM
+
+
+## v2.10.3.3 Change Log
+- [fix] resolved DLL load issue for Win7 and other OS's that dont have SetThreadDescription()
+
+## v2.10.3.2 Change Log
+- [fix] resolved issue where a 3 band equaliser would cause out of array bounds exception
+
+## v2.10.3.1 Change Log
+- [fix] serial data arriving could prevent Thetis from closing and could also cause UI freeze
+- [change] reverted to .net framework 4.8.0 to work with more operating systems
+- [change] added additional small buffer sizes to VAC config, 8, 16, 32
+
+## v2.10.3 Change Log
+- [add] T/R noise pulse in waterfall improved. Waterfall agc delayed. New option in setup to purge WDSP analyzer buffers to perform extra clear down
+- [add] skin server implementation
+- [add] FM tx/rx AF filters in DSP FM tab
+- [add] IQ swap for each vac
+- [add] additional items stored against tx profile
+	- FM AF filters
+	- VAC force checkbox state
+	- SwapIQ
+	- External audio amp checkbox state
+	- PA profile is now stored against TX profile. There is an option to recover this from a TX profile change if you want to use this
+	- RX EQ data and enabled state
+	- WASAPI exclusive states
+- [add] release notes shown on DB upgrade and button to show again from Setup->General->H/W Select
+- [add] rear speaker amp can now be disabled with G2 and G2_1k, setting in Setup->Audio->Options
+- [add] finder option on main menu bar
+- [add] mic phase reversal in DSP->CFC->PhaseRot area. Phase rot does not need to be enabled for mic phase to be used
+- [fix] compare version in TX profile importing fixed
+- [fix] skin image handles released correctly after the images have been loaded. Known issue with Image.FromFile
+- [fix] 0beat deadlock prevention where zero beat could lock Thetis on rare occasions
+- [fix] PS not able to engage after CW hopefully resolved - considerable work from Warren NR0V
+- [fix] cfc display changes and should correctly show again
+- [fix] RadioDSP is now destroyed on exit to ensure clean shutdown
+- [fix] mon should now return correctly when using cwu and changing to other modes
+- [fix] notches should import from database when importing/upgrading
+- [change] PortAudio 19.7.0 from the 2021 official release update. Exclusive options when using WASAPI
+- [change] .net framework moved to 4.8.1
+- [change] updates to UI controls, positions and colours by DH1KLM
+- [change] changes to serial to hopefully prevent rare freeze situation
+- [change] audio device dropdowns resized in setup
+- [change] the force db upgrade by holding CTRL when Thetis is launched now has additional yes/no prompt to prevent accidental upgrading
+- [change] system CPU usage should better match taskmanager. Thetis process only usage is still a mystery
 

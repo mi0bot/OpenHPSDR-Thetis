@@ -365,7 +365,7 @@ namespace Thetis
 			string f = ZZFA("");
             
             // MI0BOT: Redirect CAT to VFO B
-            if (console.CATtoVFOB && Console.getConsole().CurrentHPSDRModel == HPSDRModel.HERMESLITE)
+            if (console.CATtoVFOB && HardwareSpecific.Model == HPSDRModel.HERMESLITE)
                 f = ZZFB("");
 
             if (f.Length > 11)
@@ -383,7 +383,7 @@ namespace Thetis
                                                         //			rtn += temp;
                                                         //			rtn += Mode2KString(console.RX1DSPMode);	// current mode			 1 bytes
             // MI0BOT: Redirect CAT to VFO B
-            if (console.CATtoVFOB && Console.getConsole().CurrentHPSDRModel == HPSDRModel.HERMESLITE)
+            if (console.CATtoVFOB && HardwareSpecific.Model == HPSDRModel.HERMESLITE)
                 tempmode = Mode2KString(console.RX2DSPMode);
 			else
                 tempmode = Mode2KString(console.RX1DSPMode);
@@ -594,7 +594,7 @@ namespace Thetis
 			else if(s.Length == parser.nGet)
 			{
 				// MI0BOT: Redirect CAT to VFO B
-                if (console.CATtoVFOB && Console.getConsole().CurrentHPSDRModel == HPSDRModel.HERMESLITE)
+                if (console.CATtoVFOB && HardwareSpecific.Model == HPSDRModel.HERMESLITE)
                     return Mode2KString(console.RX2DSPMode);
 				else
                     return Mode2KString(console.RX1DSPMode);
@@ -917,7 +917,7 @@ namespace Thetis
 				float num = 0f;
 				if(console.PowerOn)
 					num = WDSP.CalculateRXMeter(0, 0,WDSP.MeterType.SIGNAL_STRENGTH);
-				num = num+console.MultiMeterCalOffset+console.PreampOffset;
+				num = num+console.RX1MeterCalOffset+console.PreampOffset;
 
 				num = Math.Max(-140, num);
 				num = Math.Min(-10, num);
@@ -1558,7 +1558,7 @@ namespace Thetis
 		//Sets or reads the BCI Rejection button status
 		public string ZZBR(string s)
 		{
-			if(console.CurrentHPSDRModel == HPSDRModel.HPSDR)
+			if(HardwareSpecific.Model == HPSDRModel.HPSDR)
 			{
 				int sx = 0;
 
@@ -2873,7 +2873,7 @@ namespace Thetis
 
 		public string ZZFM()
 		{
-			string radio = console.CurrentHPSDRModel.ToString();
+			string radio = HardwareSpecific.Model.ToString();
             bool alex_att = console.AlexPresent;
 
             if (radio == "HPSDR" || radio == "HERMES")
@@ -5591,13 +5591,13 @@ namespace Thetis
         public string ZZRV()
         {
             //MW0LGE [2.10.1.0]
-            if (console.CurrentHPSDRModel == HPSDRModel.ANAN7000D || console.CurrentHPSDRModel == HPSDRModel.ANAN8000D ||
-                   console.CurrentHPSDRModel == HPSDRModel.ANVELINAPRO3 || console.CurrentHPSDRModel == HPSDRModel.ANAN_G2 ||
-				   console.CurrentHPSDRModel == HPSDRModel.ANAN_G2_1K)
+            if (HardwareSpecific.Model == HPSDRModel.ANAN7000D || HardwareSpecific.Model == HPSDRModel.ANAN8000D ||
+                   HardwareSpecific.Model == HPSDRModel.ANVELINAPRO3 || HardwareSpecific.Model == HPSDRModel.ANAN_G2 ||
+				   HardwareSpecific.Model == HPSDRModel.ANAN_G2_1K)
             {
 				return String.Format("{0:00.0}", console.MKIIPAVolts);
             }
-            else if (console.CurrentHPSDRModel != HPSDRModel.HPSDR)
+            else if (HardwareSpecific.Model != HPSDRModel.HPSDR)
             {
 				//int val = 0;
 				//decimal volts = 0.0m;
@@ -5757,11 +5757,11 @@ namespace Thetis
                     else
                         num = WDSP.CalculateRXMeter(2, 0, WDSP.MeterType.SIGNAL_STRENGTH);
 
-                switch (console.CurrentHPSDRModel)
+                switch (HardwareSpecific.Model)
                 {
                      case HPSDRModel.HPSDR:
                         num = num +
-                        console.MultiMeterCalOffset +
+                        console.RX1MeterCalOffset +
                         Display.RX1PreampOffset +
                             //console.RX1FilterSizeCalOffset +
                         console.RX1XVTRGainOffset;
@@ -5770,7 +5770,7 @@ namespace Thetis
                         if (s == "0")
                         {
                             num = num +
-                            console.MultiMeterCalOffset +
+                            console.RX1MeterCalOffset +
                             Display.RX1PreampOffset +
                                 //console.RX1FilterSizeCalOffset +
                             console.RX1XVTRGainOffset;
@@ -6337,8 +6337,8 @@ namespace Thetis
 		// Reads the Flex 5000 temperature sensor
         public string ZZTS()
         {
-            if ((console.CurrentHPSDRModel == HPSDRModel.HERMES) ||
-                (console.CurrentHPSDRModel == HPSDRModel.HERMESLITE))		// MI0BOT: HL2
+            if ((HardwareSpecific.Model == HPSDRModel.HERMES) ||
+                (HardwareSpecific.Model == HPSDRModel.HERMESLITE))		// MI0BOT: HL2
             {
                 int val = 0;
                 float volts = 0.0f;
@@ -8104,7 +8104,7 @@ namespace Thetis
 			if (s.Length == parser.nGet)
 			{
 				// add command to the return string and terminator, because it is variable length answer
-				return "ZZZM" + console.CurrentHPSDRModel.ToString() + ";";
+				return "ZZZM" + HardwareSpecific.Model.ToString() + ";";
 			}
 			else
 				return parser.Error1;
@@ -8214,13 +8214,16 @@ namespace Thetis
 
         private string AddLeadingZeros(int n)
 		{
-			string num = n.ToString();
+			//string num = n.ToString();
 
-			while(num.Length < parser.nAns)
-				num = num.Insert(0,"0");
-			
-			return num;
-		}
+			//while(num.Length < parser.nAns)
+			//	num = num.Insert(0,"0");
+
+			//return num;
+
+			//[2.10.3.9]MW0LGE refcator for speed
+            return n.ToString().PadLeft(parser.nAns, '0');
+        }
 
         private string JustSuffix(string s)
         {
@@ -9444,7 +9447,7 @@ namespace Thetis
 			}
 			
             // MI0BOT: Redirect CAT to VFO B
-			if (console.CATtoVFOB && Console.getConsole().CurrentHPSDRModel == HPSDRModel.HERMESLITE)
+			if (console.CATtoVFOB && HardwareSpecific.Model == HPSDRModel.HERMESLITE)
 				console.RX2DSPMode = newMode;
 			else
 				console.RX1DSPMode = newMode;

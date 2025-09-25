@@ -1140,7 +1140,7 @@ void SetCWDot(int bit)
 PORT
 void SetCWX(int bit) 
 {
-	if (prn->tx[0].cwx != bit)
+	if (prn->tx[0].cwx != bit) 
 	{
 		if (prn->cw.break_in == true || XmitBit == true || prn->tx[0].cwx_ptt == true)
 		{
