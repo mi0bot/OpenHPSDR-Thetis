@@ -22401,7 +22401,9 @@ namespace Thetis
 
             int nRX1ADCinUse = console.GetADCInUse(rx1);
             int nRX2ADCinUse = console.GetADCInUse(rx2);
-            ADCsLinked = nRX1ADCinUse == nRX2ADCinUse;
+
+            if (HardwareSpecific.Model != HPSDRModel.HERMESLITE)
+                ADCsLinked = nRX1ADCinUse == nRX2ADCinUse;
 
             if (NetworkIO.CurrentRadioProtocol == RadioProtocol.ETH) // P2
             {
