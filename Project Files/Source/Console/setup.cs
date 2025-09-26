@@ -457,10 +457,6 @@ namespace Thetis
             chkLogVoltsAmps.Checked = false;
             //
 
-            // display setup
-            console.SetupDisplayEngine(false); //MW0LGE_21k9
-            //
-
             //MW0LGE_21j
             console.RepositionExternalPAButton(CheckForAnyExternalPACheckBoxes());
 
@@ -1022,7 +1018,7 @@ namespace Thetis
             if (needsRecovering(recoveryList, "lgLinearGradient_waterfall_tx"))
             {
                 defaultLinearGradients(false, true, true);
-            }
+            }            
         }
 
         public void SetMultiMeterMode(MultiMeterMeasureMode mode)
@@ -1741,7 +1737,7 @@ namespace Thetis
                 _oldSettings.Add("multimeter_io");
 
             if (getDict.ContainsKey("chkDisableHPFonPS")) // replaced by chkDisableHPFonPSb
-                _oldSettings.Add("chkDisableHPFonPS");            
+                _oldSettings.Add("chkDisableHPFonPS");   
 
             handleOldPAGainSettings(ref getDict);
         }
@@ -2360,6 +2356,7 @@ namespace Thetis
             setupTuneAnd2ToneRadios(); //MW0LGE_22b
 
             // Display Tab
+            udDisplayDecimation_ValueChanged(this, e);
             udDisplayGridMax_ValueChanged(this, e);
             udDisplayGridMin_ValueChanged(this, e);
             udDisplayGridStep_ValueChanged(this, e);
@@ -2585,6 +2582,22 @@ namespace Thetis
             radDSPNR2TRNDRX2_CheckedChanged(this, e);
             chkDSPNR2AERX2_CheckedChanged(this, e);
 
+            //nr4
+            nudNR4_red_rx1_ValueChanged(this, e);
+            nudNR4_smo_rx1_ValueChanged(this, e);
+            nudNR4_whi_rx1_ValueChanged(this, e);
+            nudNR4_res_rx1_ValueChanged(this, e);
+            nudNR4_snr_rx1_ValueChanged(this, e);
+
+            nudNR4_red_rx2_ValueChanged(this, e);
+            nudNR4_smo_rx2_ValueChanged(this, e);
+            nudNR4_whi_rx2_ValueChanged(this, e);
+            nudNR4_res_rx2_ValueChanged(this, e);
+            nudNR4_snr_rx2_ValueChanged(this, e);
+
+            setupNR4algorithm();
+            //
+
             // Transmit Tab
             udTXFilterHigh_ValueChanged(this, e);
             udTXFilterLow_ValueChanged(this, e);
@@ -2770,16 +2783,19 @@ namespace Thetis
             udN1MMSendRate_ValueChanged(this, e);
             udN1MMRX1Scaling_ValueChanged(this, e);
             udN1MMRX2Scaling_ValueChanged(this, e);
-            udMaxTCISpots_ValueChanged(this, EventArgs.Empty);
-            udTCISpotLifetime_ValueChanged(this, EventArgs.Empty);
-            chkShowTCISpots_CheckedChanged(this, EventArgs.Empty);
-            chkSpotOwnCallAppearance_CheckedChanged(this, EventArgs.Empty);
-            chkFlashNewTCISpots_CheckedChanged(this, EventArgs.Empty);
+
+            //network tci ect tab
+            udMaxTCISpots_ValueChanged(this, e);
+            udTCISpotLifetime_ValueChanged(this, e);
+            chkShowTCISpots_CheckedChanged(this, e);
+            chkSpotOwnCallAppearance_CheckedChanged(this, e);
+            chkFlashNewTCISpots_CheckedChanged(this, e);
+            chkOverrideSpotFlashColour_CheckedChanged(this, e);
 
             //MIDI
-            chkIgnore14bitMidiMessages_CheckedChanged(this, EventArgs.Empty);
-            chkMidiControlIDincludesChannel_CheckedChanged(this, EventArgs.Empty);
-            chkMidiControlIDincludesStatus_CheckedChanged(this, EventArgs.Empty);
+            chkIgnore14bitMidiMessages_CheckedChanged(this, e);
+            chkMidiControlIDincludesChannel_CheckedChanged(this, e);
+            chkMidiControlIDincludesStatus_CheckedChanged(this, e);
 
             // SNB
             udDSPSNBThresh1_ValueChanged(this, e);
@@ -2856,7 +2872,6 @@ namespace Thetis
             //PA
             comboPAProfile_SelectedIndexChanged(this, e); //MW0LGE_22b
 
-            //
             chkForceATTwhenPSAoff_CheckedChanged(this, e); //MW0LGE [2.9.0.7]
             chkForceATTwhenOutPowerChanges_CheckedChanged(this, e);
             chkForceATTwhenOutPowerChanges_decreased_CheckedChanged(this, e);
@@ -10071,10 +10086,10 @@ namespace Thetis
         {
             if (initializing) return;
             Display.DataLineColor = Color.FromArgb(tbDataLineAlpha.Value, clrbtnDataLine.Color); // MW0LGE_21b
-            rebuildLGBrushes();
+            RebuildLGBrushes();
         }
 
-        private void rebuildLGBrushes()
+        public void RebuildLGBrushes()
         {
             //lg brushes use the line alpha and lgPickerRX1_Changed
             Display.RebuildLinearGradientBrushRX = true;
@@ -16289,7 +16304,7 @@ namespace Thetis
         {
             if (initializing) return;
 
-            console.RX1StepAttPresent = chkHermesStepAttenuator.Checked;
+            console.RX1StepAttEnabled = chkHermesStepAttenuator.Checked;
 
             if (chkHermesStepAttenuator.Checked)
             {
@@ -16341,7 +16356,7 @@ namespace Thetis
         {
             if (initializing) return;
 
-            console.RX2StepAttPresent = chkRX2StepAtt.Checked;
+            console.RX2StepAttEnabled = chkRX2StepAtt.Checked;
 
             if (chkRX2StepAtt.Checked)
             {
@@ -17837,7 +17852,7 @@ namespace Thetis
 
         private void ud6mLNAGainOffset_ValueChanged(object sender, EventArgs e)
         {
-            console.RX6mGainOffset = (float)ud6mLNAGainOffset.Value;
+            console.RX6mGainOffset_RX1 = (float)ud6mLNAGainOffset.Value;
         }
 
         private void udDSPEERpdelay_ValueChanged(object sender, EventArgs e)
@@ -18909,7 +18924,7 @@ namespace Thetis
 
         private void ud6mRx2LNAGainOffset_ValueChanged(object sender, EventArgs e)
         {
-            console.RX6mGainOffsetRx2 = (float)ud6mRx2LNAGainOffset.Value;
+            console.RX6mGainOffset_RX2 = (float)ud6mRx2LNAGainOffset.Value;
         }
 
         private void chkEnableXVTRHF_CheckedChanged(object sender, EventArgs e)
@@ -21838,7 +21853,7 @@ namespace Thetis
         //}
         private void lgPickerRX1_Changed(object sender, EventArgs e)
         {
-            rebuildLGBrushes();
+            RebuildLGBrushes();
         }
 
         private void btnDeleteColourGripper_Click(object sender, EventArgs e)
@@ -22258,7 +22273,7 @@ namespace Thetis
         {
             toolTip1.SetToolTip(lgLinearGradientRX1, e.DBM.ToString());
 
-            rebuildLGBrushes(); //moving a dbm blob also causes rebuild so we have instant update
+            RebuildLGBrushes(); //moving a dbm blob also causes rebuild so we have instant update
         }
 
         private void lgPickerRX1_GripperMouseLeave(object sender, GripperEventArgs e)
@@ -23673,8 +23688,8 @@ namespace Thetis
 
         private void udDisplayDecimation_ValueChanged(object sender, EventArgs e)
         {
-            Display.Decimation = (int)udDisplayDecimation.Value;
-            console.SetupDisplayEngine();
+            if (initializing) return;
+            console.SetupDisplayEngine((int)udDisplayDecimation.Value);
         }
 
         private void chkShowPhaseAngularMean_CheckedChanged(object sender, EventArgs e)
@@ -23903,6 +23918,8 @@ namespace Thetis
         private void chkFlashNewTCISpots_CheckedChanged(object sender, EventArgs e)
         {
             if (initializing) return;
+            chkOverrideSpotFlashColour.Enabled = chkFlashNewTCISpots.Checked;
+            clrbtnSpotFlashColour.Enabled = chkFlashNewTCISpots.Checked && chkOverrideSpotFlashColour.Checked;
             Display.FlashNewTCISpots = chkFlashNewTCISpots.Checked;
         }
         public bool ShowTCISpots
@@ -35802,6 +35819,175 @@ namespace Thetis
         private void ucMeterItemSignalType_SignalTypeChanged(object sender, ucSignalSelect.SignalTypeChangedEventArgs e)
         {
             updateMeterType();
+        }
+
+        private void chkOverrideSpotFlashColour_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            clrbtnSpotFlashColour.Enabled = chkOverrideSpotFlashColour.Checked;
+            Display.OverrideSpotFlashColour = chkOverrideSpotFlashColour.Checked;
+            clrbtnSpotFlashColour_Changed(this, EventArgs.Empty);
+        }
+
+        private void clrbtnSpotFlashColour_Changed(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            Display.SpotFlashColour = clrbtnSpotFlashColour.Color;
+        }
+        public float NR4RedcutionAmmountRX1
+        {
+            get 
+            {
+                return (float)nudNR4_red_rx1.Value;
+            }
+            set
+            {
+                //used by console/cat/midi to set the nr4 reduction
+                if (value < 0) value = 0;
+                if (value > 20) value = 20;
+
+                nudNR4_red_rx1.Value = (decimal)value;
+            }
+        }
+        public float NR4RedcutionAmmountRX2
+        {
+            get
+            {
+                return (float)nudNR4_red_rx2.Value;
+            }
+            set
+            {
+                //used by console/cat/midi to set the nr4 reduction
+                if (value < 0) value = 0;
+                if (value > 20) value = 20;
+
+                nudNR4_red_rx2.Value = (decimal)value;
+            }
+        }
+        private void nudNR4_red_rx1_ValueChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            console.radio.GetDSPRX(0, 0).RXASBNRreductionAmount = (float)nudNR4_red_rx1.Value;
+            console.radio.GetDSPRX(0, 1).RXASBNRreductionAmount = (float)nudNR4_red_rx1.Value;
+        }
+
+        private void nudNR4_smo_rx1_ValueChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            console.radio.GetDSPRX(0, 0).RXASBNRsmoothingFactor = (float)nudNR4_smo_rx1.Value;
+            console.radio.GetDSPRX(0, 1).RXASBNRsmoothingFactor = (float)nudNR4_smo_rx1.Value;
+        }
+
+        private void nudNR4_whi_rx1_ValueChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            console.radio.GetDSPRX(0, 0).RXASBNRwhiteningFactor = (float)nudNR4_whi_rx1.Value;
+            console.radio.GetDSPRX(0, 1).RXASBNRwhiteningFactor = (float)nudNR4_whi_rx1.Value;
+        }
+
+        private void nudNR4_res_rx1_ValueChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            console.radio.GetDSPRX(0, 0).RXASBNRnoiseRescale = (float)nudNR4_res_rx1.Value;
+            console.radio.GetDSPRX(0, 1).RXASBNRnoiseRescale = (float)nudNR4_res_rx1.Value;
+        }
+
+        private void nudNR4_snr_rx1_ValueChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            console.radio.GetDSPRX(0, 0).RXASBNRpostFilterThreshold = (float)nudNR4_snr_rx1.Value;
+            console.radio.GetDSPRX(0, 1).RXASBNRpostFilterThreshold = (float)nudNR4_snr_rx1.Value;
+        }
+        private void setupNR4algorithm()
+        {
+            radNR4_algo1_CheckedChanged(this, EventArgs.Empty);
+            radNR4_algo2_CheckedChanged(this, EventArgs.Empty);
+            radNR4_algo3_CheckedChanged(this, EventArgs.Empty);
+            radNR4_algo1_rx2_CheckedChanged(this, EventArgs.Empty);
+            radNR4_algo2_rx2_CheckedChanged(this, EventArgs.Empty);
+            radNR4_algo3_rx2_CheckedChanged(this, EventArgs.Empty);
+        }
+        private void radNR4_algo1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            if (!radNR4_algo1.Checked) return;
+            console.radio.GetDSPRX(0, 0).RXASBNRnoiseScalingType = 0;
+            console.radio.GetDSPRX(0, 1).RXASBNRnoiseScalingType = 0;
+        }
+
+        private void radNR4_algo2_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            if (!radNR4_algo2.Checked) return;
+            console.radio.GetDSPRX(0, 0).RXASBNRnoiseScalingType = 1;
+            console.radio.GetDSPRX(0, 1).RXASBNRnoiseScalingType = 1;
+        }
+
+        private void radNR4_algo3_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            if (!radNR4_algo3.Checked) return;
+            console.radio.GetDSPRX(0, 0).RXASBNRnoiseScalingType = 2;
+            console.radio.GetDSPRX(0, 1).RXASBNRnoiseScalingType = 2;
+        }
+
+        private void nudNR4_red_rx2_ValueChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            console.radio.GetDSPRX(1, 0).RXASBNRreductionAmount = (float)nudNR4_red_rx2.Value;
+            console.radio.GetDSPRX(1, 1).RXASBNRreductionAmount = (float)nudNR4_red_rx2.Value;
+        }
+
+        private void nudNR4_smo_rx2_ValueChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            console.radio.GetDSPRX(1, 0).RXASBNRsmoothingFactor = (float)nudNR4_smo_rx2.Value;
+            console.radio.GetDSPRX(1, 1).RXASBNRsmoothingFactor = (float)nudNR4_smo_rx2.Value;
+        }
+
+        private void nudNR4_whi_rx2_ValueChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            console.radio.GetDSPRX(1, 0).RXASBNRwhiteningFactor = (float)nudNR4_whi_rx2.Value;
+            console.radio.GetDSPRX(1, 1).RXASBNRwhiteningFactor = (float)nudNR4_whi_rx2.Value;
+        }
+
+        private void nudNR4_res_rx2_ValueChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            console.radio.GetDSPRX(1, 0).RXASBNRnoiseRescale = (float)nudNR4_res_rx2.Value;
+            console.radio.GetDSPRX(1, 1).RXASBNRnoiseRescale = (float)nudNR4_res_rx2.Value;
+        }
+
+        private void nudNR4_snr_rx2_ValueChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            console.radio.GetDSPRX(1, 0).RXASBNRpostFilterThreshold = (float)nudNR4_snr_rx2.Value;
+            console.radio.GetDSPRX(1, 1).RXASBNRpostFilterThreshold = (float)nudNR4_snr_rx2.Value;
+        }
+
+        private void radNR4_algo1_rx2_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            if (!radNR4_algo1_rx2.Checked) return;
+            console.radio.GetDSPRX(1, 0).RXASBNRnoiseScalingType = 0;
+            console.radio.GetDSPRX(1, 1).RXASBNRnoiseScalingType = 0;
+        }
+
+        private void radNR4_algo2_rx2_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            if (!radNR4_algo2_rx2.Checked) return;
+            console.radio.GetDSPRX(1, 0).RXASBNRnoiseScalingType = 1;
+            console.radio.GetDSPRX(1, 1).RXASBNRnoiseScalingType = 1;
+        }
+
+        private void radNR4_algo3_rx2_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            if (!radNR4_algo3_rx2.Checked) return;
+            console.radio.GetDSPRX(1, 0).RXASBNRnoiseScalingType = 2;
+            console.radio.GetDSPRX(1, 1).RXASBNRnoiseScalingType = 2;
         }
     }
 

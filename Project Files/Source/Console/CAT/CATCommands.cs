@@ -33,7 +33,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using System.Collections.Generic;
-using System.Windows.Forms;                           
+using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace Thetis
 {
@@ -2638,8 +2639,11 @@ namespace Thetis
 				else
 					s = s.Insert(5, separator);
 
-                if (!isMidi && console.CATChangesCenterFreq) // MW0LGE changed to take into consideration the flag
-                    console.UpdateCenterFreq = true;
+				if (!isMidi && console.CATChangesCenterFreq) // MW0LGE changed to take into consideration the flag
+				{
+					console.UpdateCenterFreq = true;
+				}
+
 				console.VFOAFreq = double.Parse(s);
 				return "";
 			}
@@ -2682,8 +2686,11 @@ namespace Thetis
 				else
 					s = s.Insert(5, separator);
 
-                if (!isMidi2 && console.CATChangesCenterFreq) // MW0LGE changed to take into consideration the flag
-                    console.UpdateRX2CenterFreq = true;
+				if (!isMidi2 && console.CATChangesCenterFreq) // MW0LGE changed to take into consideration the flag
+				{
+					console.UpdateRX2CenterFreq = true;
+				}
+
 				console.VFOBFreq = double.Parse(s);
 				return "";
 			}
@@ -4608,9 +4615,183 @@ namespace Thetis
                 return parser.Error1;
             }
         }
-        
+
+        // Sets or reads the RX1 Noise Reduction status
+		// returns 0 for off, 1,2,3,4 depending on NR in use
+        public string ZZNE(string s)
+        {
+            int sx = 0;
+
+            if (s != "")
+                sx = Convert.ToInt32(s);
+
+            if (s.Length == parser.nSet && (s == "0" || s == "1" || s == "2" || s == "3" || s == "4"))
+            {
+                console.SelectNR(1, true, sx);
+
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return console.GetSelectedNR(1).ToString();
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Sets or reads the RX2 Noise Reduction status
+        // returns 0 for off, 1,2,3,4 depending on NR in use
+        public string ZZNF(string s)
+        {
+            int sx = 0;
+
+            if (s != "")
+                sx = Convert.ToInt32(s);
+
+            if (s.Length == parser.nSet && (s == "0" || s == "1" || s == "2" || s == "3" || s == "4"))
+            {
+                console.SelectNR(2, true, sx);
+
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return console.GetSelectedNR(2).ToString();
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+
+		// Sets the RX1 NR4 reduction amount, supplied as int from 0 to 100, then converted to 0-20dB
+        public string ZZNG(string s)
+        {
+            int val = 0;
+
+            if (s.Length == parser.nSet)
+            {
+				if (!console.IsSetupFormNull)
+				{
+                    val = Convert.ToInt32(s);
+					if (val < 0) val = 0;
+					if (val > 100) val = 100;
+					float dB = (20f / 100f) * val;
+
+                    if (console.SetupForm.InvokeRequired)
+                    {
+                        console.SetupForm.Invoke(
+                            new MethodInvoker(delegate
+                            {
+                                console.SetupForm.NR4RedcutionAmmountRX1 = dB;
+                            })
+                        );
+                    }
+                    else
+                    {
+                        console.SetupForm.NR4RedcutionAmmountRX1 = dB;
+                    }
+                }
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+				if (!console.IsSetupFormNull)
+				{
+					int perc;
+					float dB = 0;
+					if (console.SetupForm.InvokeRequired)
+					{
+						console.SetupForm.Invoke(
+							new MethodInvoker(delegate
+							{
+								dB = console.SetupForm.NR4RedcutionAmmountRX1;
+							})
+						);
+					}
+					else
+					{
+						dB = console.SetupForm.NR4RedcutionAmmountRX1;
+					}
+					perc = (int)((dB / 20f) * 100f);
+					return AddLeadingZeros(perc);
+				}
+				else
+				{
+                    return AddLeadingZeros(0);
+                }
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Sets the RX1 NR4 reduction amount, supplied as int from 0 to 100, then converted to 0-20dB
+        public string ZZNH(string s)
+        {
+            int val = 0;
+
+            if (s.Length == parser.nSet)
+            {
+                if (!console.IsSetupFormNull)
+                {
+                    val = Convert.ToInt32(s);
+                    if (val < 0) val = 0;
+                    if (val > 100) val = 100;
+                    float dB = (20f / 100f) * val;
+
+                    if (console.SetupForm.InvokeRequired)
+                    {
+                        console.SetupForm.Invoke(
+                            new MethodInvoker(delegate
+                            {
+                                console.SetupForm.NR4RedcutionAmmountRX2 = dB;
+                            })
+                        );
+                    }
+                    else
+                    {
+                        console.SetupForm.NR4RedcutionAmmountRX2 = dB;
+                    }
+                }
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                if (!console.IsSetupFormNull)
+                {
+                    int perc;
+                    float dB = 0;
+                    if (console.SetupForm.InvokeRequired)
+                    {
+                        console.SetupForm.Invoke(
+                            new MethodInvoker(delegate
+                            {
+                                dB = console.SetupForm.NR4RedcutionAmmountRX2;
+                            })
+                        );
+                    }
+                    else
+                    {
+                        dB = console.SetupForm.NR4RedcutionAmmountRX2;
+                    }
+                    perc = (int)((dB / 20f) * 100f);
+                    return AddLeadingZeros(perc);
+                }
+                else
+                {
+                    return AddLeadingZeros(0);
+                }
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+
         //Sets or reads the ANF button status
-		public string ZZNT(string s)
+        public string ZZNT(string s)
 		{
 			if(s.Length == parser.nSet && (s == "0" || s == "1"))
 			{

@@ -2012,6 +2012,22 @@ namespace Thetis
             return CmdState.NoChange;
         }
 
+        public void NoiseReduction4Amount(int msg, MidiDevice device)
+        {
+            parser.nSet = 3;
+            parser.nGet = 0;
+
+            try
+            {
+                double amount = msg * (100f / 127f);
+                commands.ZZNG(amount.ToString("000"));
+                return;
+            }
+            catch
+            {
+                return;
+            }
+        }
 
         public CmdState NoiseReductionOnOff(int msg, MidiDevice device)
         {
@@ -2020,9 +2036,9 @@ namespace Thetis
                 parser.nGet = 0;
                 parser.nSet = 1;
 
-                int NRState = Convert.ToInt16(commands.ZZNR(""));
+                int NRState = Convert.ToInt16(commands.ZZNE(""));
 
-                if (NRState == 0)
+                if (NRState != 1)
                 {
                     commands.ZZNR("1");
                     return CmdState.On;
@@ -2043,20 +2059,80 @@ namespace Thetis
                 parser.nGet = 0;
                 parser.nSet = 1;
 
-                int NRState = Convert.ToInt16(commands.ZZNS(""));
+                int NRState = Convert.ToInt16(commands.ZZNE(""));
 
-                if (NRState == 0)
+                if (NRState != 2)
                 {
                     commands.ZZNS("1");
                     return CmdState.On;
                 }
-                if (NRState == 1)
+                if (NRState == 2)
                 {
                     commands.ZZNS("0");
                     return CmdState.Off;
                 }
             }
             return CmdState.NoChange;
+        }
+        public CmdState NoiseReduction3OnOff(int msg, MidiDevice device)  //-W2PA Corrected name to appropriate one for ZZNS
+        {
+            if (msg == 127)
+            {
+                parser.nGet = 0;
+                parser.nSet = 1;
+
+                int NRState = Convert.ToInt16(commands.ZZNE(""));
+
+                if (NRState != 3)
+                {
+                    commands.ZZNE("3");
+                    return CmdState.On;
+                }
+                if (NRState == 3)
+                {
+                    commands.ZZNE("0");
+                    return CmdState.Off;
+                }
+            }
+            return CmdState.NoChange;
+        }
+        public CmdState NoiseReduction4OnOff(int msg, MidiDevice device)  //-W2PA Corrected name to appropriate one for ZZNS
+        {
+            if (msg == 127)
+            {
+                parser.nGet = 0;
+                parser.nSet = 1;
+
+                int NRState = Convert.ToInt16(commands.ZZNE(""));
+
+                if (NRState != 4)
+                {
+                    commands.ZZNE("4");
+                    return CmdState.On;
+                }
+                if (NRState == 4)
+                {
+                    commands.ZZNE("0");
+                    return CmdState.Off;
+                }
+            }
+            return CmdState.NoChange;
+        }
+        public void Rx2NoiseReduction4Amount(int msg, MidiDevice device)
+        {
+            parser.nSet = 3;
+            parser.nGet = 0;
+
+            try
+            {
+                double amount = msg * (100f / 127f);
+                commands.ZZNH(amount.ToString("000"));
+                return;
+            }
+            catch
+            {
+                return;
+            }
         }
 
         public CmdState Rx2NoiseReductionOnOff(int msg, MidiDevice device)  //-W2PA Corrected to calling ZZNV instead of ZZNS as above
@@ -2066,9 +2142,9 @@ namespace Thetis
                 parser.nGet = 0;
                 parser.nSet = 1;
 
-                int NRState = Convert.ToInt16(commands.ZZNS(""));
+                int NRState = Convert.ToInt16(commands.ZZNF(""));
 
-                if (NRState == 0)
+                if (NRState != 1)
                 {
                     commands.ZZNV("1");
                     return CmdState.On;
@@ -2081,7 +2157,6 @@ namespace Thetis
             }
             return CmdState.NoChange;
         }
-
         public CmdState Rx2NoiseReduction2OnOff(int msg, MidiDevice device)  //-W2PA Added function to call ZZNW
         {
             if (msg == 127)
@@ -2089,16 +2164,60 @@ namespace Thetis
                 parser.nGet = 0;
                 parser.nSet = 1;
 
-                int NRState = Convert.ToInt16(commands.ZZNS(""));
+                int NRState = Convert.ToInt16(commands.ZZNF(""));
 
-                if (NRState == 0)
+                if (NRState != 2)
                 {
                     commands.ZZNW("1");
                     return CmdState.On;
                 }
-                if (NRState == 1)
+                if (NRState == 2)
                 {
                     commands.ZZNW("0");
+                    return CmdState.Off;
+                }
+            }
+            return CmdState.NoChange;
+        }
+        public CmdState Rx2NoiseReduction3OnOff(int msg, MidiDevice device)  //-W2PA Corrected name to appropriate one for ZZNS
+        {
+            if (msg == 127)
+            {
+                parser.nGet = 0;
+                parser.nSet = 1;
+
+                int NRState = Convert.ToInt16(commands.ZZNF(""));
+
+                if (NRState != 3)
+                {
+                    commands.ZZNF("3");
+                    return CmdState.On;
+                }
+                if (NRState == 3)
+                {
+                    commands.ZZNF("0");
+                    return CmdState.Off;
+                }
+            }
+            return CmdState.NoChange;
+        }
+        public CmdState Rx2NoiseReduction4OnOff(int msg, MidiDevice device)  //-W2PA Corrected name to appropriate one for ZZNS
+        {
+            if (msg == 127)
+            {
+                parser.nGet = 0;
+                parser.nSet = 1;
+
+                int NRState = Convert.ToInt16(commands.ZZNF(""));
+
+                if (NRState != 4)
+                {
+                    commands.ZZNF("4");
+                    return CmdState.On;
+                }
+                if (NRState == 4)
+                {
+                    commands.ZZNF("0");
                     return CmdState.Off;
                 }
             }
