@@ -10815,7 +10815,7 @@ namespace Thetis
                         //int txatt = getTXstepAttenuatorForBand(_tx_band);
                         
                         if (HardwareSpecific.Model == HPSDRModel.HERMESLITE) 
-                           NetworkIO.SetTxAttenData(32 - _tx_attenuator_data); // MI0BOT: Greater range for HL2
+                           NetworkIO.SetTxAttenData(31 - _tx_attenuator_data); // MI0BOT: Greater range for HL2
                         else
                         {
                             //NetworkIO.SetTxAttenData(txatt); //[2.10.3.6]MW0LGE att_fixes
@@ -11221,7 +11221,7 @@ namespace Thetis
                     if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)       // MI0BOT: HL2 wider  LNA range
                     {
                         NetworkIO.SetAlexAtten(0);
-                        NetworkIO.SetADC1StepAttenData(32 - _rx1_attenuator_data);
+                        NetworkIO.SetADC1StepAttenData(31 - _rx1_attenuator_data);
                     }
                     else if (alexpresent &&
                         HardwareSpecific.Model != HPSDRModel.ANAN10 &&
@@ -11386,7 +11386,7 @@ namespace Thetis
                     if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)       // MI0BOT: HL2 wider  LNA range
                     {
                         NetworkIO.SetAlexAtten(0);
-                        NetworkIO.SetADC1StepAttenData(32 - _rx1_attenuator_data);
+                        NetworkIO.SetADC1StepAttenData(31 - _rx1_attenuator_data);
                     }
                     else if (alexpresent &&
                         HardwareSpecific.Model != HPSDRModel.ANAN10 &&
@@ -19379,7 +19379,7 @@ namespace Thetis
                         int txatt = getTXstepAttenuatorForBand(_tx_band);
                         
                         if (HardwareSpecific.Model == HPSDRModel.HERMESLITE) 
-                           NetworkIO.SetTxAttenData(32 - txatt); // MI0BOT: Greater range for HL2
+                           NetworkIO.SetTxAttenData(31 - txatt); // MI0BOT: Greater range for HL2
                         else
                            NetworkIO.SetTxAttenData(txatt); //[2.10.3.6]MW0LGE att_fixes
 
@@ -19613,7 +19613,7 @@ namespace Thetis
                     if (!_rx1_step_att_enabled)
                     {
                         if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)       // MI0BOT: Adjustment for HL2 LNA range 
-                            NetworkIO.SetADC1StepAttenData(32 - rx1_att_value);
+                            NetworkIO.SetADC1StepAttenData(31 - rx1_att_value);
                         else if (nRX1ADCinUse == 0) NetworkIO.SetADC1StepAttenData(rx1_att_value);
                         else if (nRX1ADCinUse == 1) NetworkIO.SetADC2StepAttenData(rx1_att_value);
                         else if (nRX1ADCinUse == 2) NetworkIO.SetADC3StepAttenData(rx1_att_value);
@@ -28600,7 +28600,7 @@ namespace Thetis
                     int txatt = getTXstepAttenuatorForBand(_tx_band);
                     
                     if (HardwareSpecific.Model == HPSDRModel.HERMESLITE) 
-                       NetworkIO.SetTxAttenData(32 - txatt); //MI0BOT: Greater range for HL2
+                       NetworkIO.SetTxAttenData(31 - txatt); //MI0BOT: Greater range for HL2
                     else
                        NetworkIO.SetTxAttenData(txatt); //[2.10.3.6]MW0LGE att_fixes
 
