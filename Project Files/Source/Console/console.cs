@@ -28826,6 +28826,12 @@ namespace Thetis
                     if (SetupForm.Cl2Checked)               // MI0BOT: HL2 CL2 clock output
                         SetupForm.ControlCl2(SetupForm.Cl2Checked);
                 }
+
+                if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)       // MI0BOT: Correct audio 
+                {
+                    Audio.VACRXScale = Math.Pow(10.0, VACRXGain / 20.0);
+                    Audio.VAC2RXScale = Math.Pow(10.0, VAC2RXGain / 20.0);
+                }
             }
             else
             {
