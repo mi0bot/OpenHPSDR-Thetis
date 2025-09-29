@@ -716,7 +716,7 @@ namespace Thetis
                                 // device is NOT on the subnet that this port actually services.  Do NOT add to list!
                                 System.Console.WriteLine("Not on subnet of host adapter! Adapter IP {0}, Adapter mask {1}",
                                     hostPortIPAddress.ToString(), hostPortMask.ToString());
-                            }
+                            }                         
                             else if (MAC.Equals("00-00-00-00-00-00"))
                             {
                                 System.Console.WriteLine("Rejected: contains bogus MAC address of all-zeroes");

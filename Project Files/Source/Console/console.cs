@@ -8284,7 +8284,7 @@ namespace Thetis
                         break;
                     //case HPSDRHW.Atlas: /// ???
                     case HPSDRHW.Hermes: // ANAN-10 ANAN-100 Heremes
-                    case HPSDRHW.HermesLite: // HL2 does support P2 but need to have entry to correcly ID hardware
+                    case HPSDRHW.HermesLite: // HL2 doesn't support P2 but need to have entry to correcly ID hardware
                     case HPSDRHW.HermesII: // ANAN-10E ANAN-100B HeremesII
                         switch (tot)
                         {
@@ -8378,7 +8378,7 @@ namespace Thetis
                         break;
                     //                    case HPSDRHW.Atlas: /// ???
                     case HPSDRHW.Hermes: // ANAN-10 ANAN-100 Heremes (4 adc)
-                    case HPSDRHW.HermesLite: // Hermes Lite 2
+                    case HPSDRHW.HermesLite: // MI0BOT: Hermes Lite 2
                         switch (tot)
                         {
                             case 0: // off off off
@@ -10825,7 +10825,6 @@ namespace Thetis
                         }
 
                         Display.TXAttenuatorOffset = _tx_attenuator_data; //[2.10.3.6]MW0LGE att_fixes
-                        
                     }
                     else
                     {
@@ -11451,7 +11450,7 @@ namespace Thetis
         }
 
         private int[] m_nTuneStepsByMode; //MW0LGE_21j
-        
+
         private List<TuneStep> tune_step_list;				// A list of available tuning steps
         public List<TuneStep> TuneStepList
         {
@@ -15245,7 +15244,6 @@ namespace Thetis
                         return;
                     }
                 }
-
                 Alex.TRxAnt = true;
                 chkRxAnt.Text = "Tx Ant";
                 chkRxAnt.ForeColor = Color.Yellow;
@@ -17189,7 +17187,6 @@ namespace Thetis
 
         // property set when An Andromeda panel is connected via a serial CAT port.
         // NOT used for G2 panel accessed via TCP/IP
-
         private bool andromeda_cat_enabled;
         public bool AndromedaCATEnabled
         {
@@ -18758,7 +18755,6 @@ namespace Thetis
             set
             {
                 value = Math.Max(0, value);			// lower bound
-
                 value = Math.Min(100, value);		// upper bound
 
                 ptbTune.Value = value;
@@ -19391,6 +19387,7 @@ namespace Thetis
                         Display.TXAttenuatorOffset = 0;
                     }
                 }
+
             }
         }
 
@@ -30680,15 +30677,6 @@ namespace Thetis
                     udTXStepAttData.BringToFront();
                     udTXStepAttData.Visible = m_bAttontx;
                     lblRX2Preamp.Text = m_bAttontx ? "[S-ATT]" : (_rx2_step_att_enabled ? "S-ATT" : "ATT");
-
-                    //if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)
-                    //{
-                    //    if (m_bAttontx)
-                    //        lblRX2Preamp.Enabled = true;
-                    //    else
-                    //        lblRX2Preamp.Enabled = false;
-                    //}
-                    
                 }
                 else
                 {
@@ -30709,15 +30697,6 @@ namespace Thetis
                 {
                     lblPreamp.Text = AutoAttRX1 ? "A-ATT" : "S-ATT";
                 }
-
-                //if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)
-                //{
-                //    if (m_bAttontx)
-                //        lblRX2Preamp.Enabled = true;
-                //    else
-                //        lblRX2Preamp.Enabled = false;
-                //}
-
             }
 
             if (_iscollapsed && !_isexpanded)
@@ -42437,6 +42416,7 @@ namespace Thetis
                     }
                     else
                         comboPreamp.Items.AddRange(anan100d_preamp_settings);
+
                     break;
                 case HPSDRModel.ANAN10:
                 case HPSDRModel.ANAN10E:
