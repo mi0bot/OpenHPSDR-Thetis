@@ -30671,12 +30671,24 @@ namespace Thetis
                     comboRX2Preamp.Enabled = false;
                     udRX2StepAttData.Enabled = false;
 
-                    //move it to rx2
-                    udTXStepAttData.Location = udRX2StepAttData.Location;
-                    udTXStepAttData.Parent = udRX2StepAttData.Parent;
-                    udTXStepAttData.BringToFront();
-                    udTXStepAttData.Visible = m_bAttontx;
-                    lblRX2Preamp.Text = m_bAttontx ? "[S-ATT]" : (_rx2_step_att_enabled ? "S-ATT" : "ATT");
+                    if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)
+                    {
+                        // For the HL2 there is only one attenuator, so keep it to the RX1 control
+                        udTXStepAttData.Location = udRX1StepAttData.Location;
+                        udTXStepAttData.Parent = udRX1StepAttData.Parent;
+                        udTXStepAttData.BringToFront();
+                        udTXStepAttData.Visible = m_bAttontx;
+                        lblPreamp.Text = m_bAttontx ? "[S-ATT]" : (AutoAttRX1 ? "A-ATT" : "S-ATT");
+                    }
+                    else
+                    {
+                        //move it to rx2
+                        udTXStepAttData.Location = udRX2StepAttData.Location;
+                        udTXStepAttData.Parent = udRX2StepAttData.Parent;
+                        udTXStepAttData.BringToFront();
+                        udTXStepAttData.Visible = m_bAttontx;
+                        lblRX2Preamp.Text = m_bAttontx ? "[S-ATT]" : (_rx2_step_att_enabled ? "S-ATT" : "ATT");
+                    }
                 }
                 else
                 {
