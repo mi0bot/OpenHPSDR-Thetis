@@ -10825,6 +10825,7 @@ namespace Thetis
                         }
 
                         Display.TXAttenuatorOffset = _tx_attenuator_data; //[2.10.3.6]MW0LGE att_fixes
+                        
                     }
                     else
                     {
@@ -11450,7 +11451,7 @@ namespace Thetis
         }
 
         private int[] m_nTuneStepsByMode; //MW0LGE_21j
-
+        
         private List<TuneStep> tune_step_list;				// A list of available tuning steps
         public List<TuneStep> TuneStepList
         {
@@ -15244,6 +15245,7 @@ namespace Thetis
                         return;
                     }
                 }
+
                 Alex.TRxAnt = true;
                 chkRxAnt.Text = "Tx Ant";
                 chkRxAnt.ForeColor = Color.Yellow;
@@ -17187,6 +17189,7 @@ namespace Thetis
 
         // property set when An Andromeda panel is connected via a serial CAT port.
         // NOT used for G2 panel accessed via TCP/IP
+
         private bool andromeda_cat_enabled;
         public bool AndromedaCATEnabled
         {
@@ -18755,6 +18758,7 @@ namespace Thetis
             set
             {
                 value = Math.Max(0, value);			// lower bound
+
                 value = Math.Min(100, value);		// upper bound
 
                 ptbTune.Value = value;
@@ -19387,7 +19391,6 @@ namespace Thetis
                         Display.TXAttenuatorOffset = 0;
                     }
                 }
-
             }
         }
 
@@ -42428,7 +42431,6 @@ namespace Thetis
                     }
                     else
                         comboPreamp.Items.AddRange(anan100d_preamp_settings);
-
                     break;
                 case HPSDRModel.ANAN10:
                 case HPSDRModel.ANAN10E:

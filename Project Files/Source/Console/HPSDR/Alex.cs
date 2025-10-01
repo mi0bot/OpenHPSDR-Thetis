@@ -333,17 +333,19 @@ namespace Thetis
 
 			int idx = (int)band - (int)Band.B160M; 
 
-			if ( idx < 0 || idx > 11 ) 
-			{ 
+            if (idx < 0 || idx > 11)
+            {
 				band = AntBandFromFreq(tx); 
-				idx = (int)band - (int)Band.B160M; 
-				if ( idx < 0 || idx > 11 ) 
-				{ 
-					System.Console.WriteLine("No good ant!"); 
-					return; 
-				}
-			} 
 
+                idx = (int)band - (int)Band.B160M;
+                if (idx < 0 || idx > 11)
+                {
+                    System.Console.WriteLine("No good ant!");
+                    return;
+                }
+            }
+            
+			//System.Console.WriteLine("Ant idx: " + idx);  //moved into different check down below			            
 			tx_ant = TxAnt[idx];
 
 			if ( tx ) 
