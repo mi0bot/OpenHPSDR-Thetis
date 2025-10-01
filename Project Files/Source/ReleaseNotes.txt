@@ -1,10 +1,13 @@
-**UPDATE: The CW issue has been resolved for Protocol 2. It requires a firmware update and this modified version of Thetis. Please see the [ApacheLabs community forums here](https://community.apache-labs.com/viewtopic.php?f=32&t=4972)**
+This is the Thetis version for the Hermes Lite 2.
 
-**Note: You can revisit these release notes by using the button inside the About box**
+Please report any bugs on [GitHub here](https://github.com/mi0bot/OpenHPSDR-Thetis/issues/new/choose).
 
-Please report any issue over on [GitHub here](https://github.com/ramdor/Thetis/issues/new/choose).
+## 2.10.3.11 Beta 1 (2025-10-01)
 
-## Join us on Discord for active test builds and much more : [Click Here](https://discord.gg/6fHCRKnDc9)
+- Updated code base to latest official 2.20.3.11 code
+- Fixed VAC gain control not being applied at power up
+
+####################################### Official Thetis Release Notes ###################################################
 
 ## v2.10.3.11 - Change Log
 - [add] two new noise reduction methods added, NR3 and NR4. When starting up this version for the first time if NR was enabled, will now be set to off. Only support for nr/nr2 is available through cat and other systems that use cat such as midi. Settings in the normal NR settings page of Setup
