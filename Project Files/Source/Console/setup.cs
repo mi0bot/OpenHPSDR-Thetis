@@ -21975,7 +21975,7 @@ namespace Thetis
                 if (timeout++ >= 20) break;
             } while (1 == status);
 
-            if (-1 == status)
+            if (-1 == status || timeout == 20)
             {
                 txtI2CByte0.Text = "or";
                 txtI2CByte1.Text = "Err";

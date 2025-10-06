@@ -26245,7 +26245,7 @@ namespace Thetis
         private async void UpdateIOBoard()
         {
             long currentFreq, lastFreq = 0;
-            byte[] read_data = new byte[4];
+            byte readData = 0;
             byte state = 0;
             byte old_IOBoardAerialPorts = 0;
             byte old_IOBoardAerialMode = 0;
@@ -26253,9 +26253,11 @@ namespace Thetis
             byte timeout = 0;
             int status = 0;
 
+            IOBoard ioBoard = IOBoard.getIOBoard(this);
+
             // Read the hardware revision on bus 2 at address 0x41, register 0
 
-            while (0 != NetworkIO.I2CReadInitiate(1, 0x41, 0))
+            while (0 != ioBoard.readRequest(IOBoard.Registers.HardwareVersion))
             {
                 await Task.Delay(1);
                 if (timeout++ >= 20) return;
@@ -26267,9 +26269,9 @@ namespace Thetis
             {
                 await Task.Delay(1);
                 if (timeout++ >= 20) return;
-            } while (1 == NetworkIO.I2CResponse(read_data));
+            } while (1 == ioBoard.readResponse());
 
-            if (read_data[0] == 0xf1)   // Expect to find version 1 of the IO board
+            if (ioBoard.hardwareVersion == (byte) IOBoard.HardwareVersion.Version_1)   // Expect to find version 1 of the IO board
             {
                 if (!SetupForm.HL2IOBoardPresent)
                 {
@@ -26290,7 +26292,7 @@ namespace Thetis
                     if (reset)
                     {
                         reset = false;
-                        NetworkIO.I2CWrite(1, 0x1d, 5, 1);
+                        ioBoard.writeRequest(IOBoard.Registers.REG_CONTROL, 1);
                         await Task.Delay(1);
                     }
 
@@ -26309,7 +26311,7 @@ namespace Thetis
                         case 6: // Secondary receive selection
                             if (IOBoardAerialMode != old_IOBoardAerialMode)
                             {
-                                NetworkIO.I2CWrite(1, 0x1d, 11, (IOBoardAerialMode));
+                                ioBoard.writeRequest(IOBoard.Registers.REG_RF_INPUTS, IOBoardAerialMode);
                                 old_IOBoardAerialMode = IOBoardAerialMode;
                             }
                             break;
@@ -26318,58 +26320,48 @@ namespace Thetis
                         case 4:
                         case 7:
                         case 10:
-                            // Read the input at register 6
-                            NetworkIO.I2CReadInitiate(1, 0x1d, 6);
+                            // Read the input pins 
+                            while (0 != ioBoard.readRequest(IOBoard.Registers.REG_INPUT_PINS))
+                            {
+                                await Task.Delay(1);
+                                if (timeout++ >= 20) return;
+                            }
 
                             timeout = 0;
                             do
                             {
                                 await Task.Delay(1);
-                                status = NetworkIO.I2CResponse(read_data);      // [3] Input pins, [2] Ant tuner, [1] Fault, [0] Major Version
+                                status = ioBoard.readResponse();      // [3] Input pins, [2] Ant tuner, [1] Fault, [0] Major Version
                                 if (timeout++ >= 20) break;
                             } while (1 == status);    
 
                             if (status == 0)
                             {
-                                if (0 != read_data[1])
+                                if (0 != ioBoard.readRegister(IOBoard.Registers.REG_FAULT))
                                 {
                                     TXInhibit = true;
-                                    infoBar.Warning("I/O Board: Fault Code " + read_data[1].ToString());
+                                    infoBar.Warning("I/O Board: Fault Code " + ioBoard.readRegister(IOBoard.Registers.REG_FAULT).ToString());
                                     AutoTuningHL2(ProtocolEvent.Idle);
                                 }
                                 else
                                 {
-                                    AutoTuningHL2((ProtocolEvent) read_data[2]);
+                                    AutoTuningHL2((ProtocolEvent) ioBoard.readRegister(IOBoard.Registers.REG_ANTENNA_TUNER));
                                 }
 
-                                SetupForm.UpdateIOLedStrip(MOX, read_data[3]);
+                                SetupForm.UpdateIOLedStrip(MOX, ioBoard.readRegister(IOBoard.Registers.REG_INPUT_PINS));
                             }
                             break;
 
                         case 8:
                         case 2: // Write current transmission frequency
-                            if (currentFreq != lastFreq)
-                            {
-                                // Write frequency on bus 2 at address 0x1d into the five registers
-                                NetworkIO.I2CWrite(1, 0x1d, 0, 0xff & (byte)(currentFreq >> 32));
-                                await Task.Delay(1);
-                                NetworkIO.I2CWrite(1, 0x1d, 1, 0xff & (byte)(currentFreq >> 24));
-                                await Task.Delay(1);
-                                NetworkIO.I2CWrite(1, 0x1d, 2, 0xff & (byte)(currentFreq >> 16));
-                                await Task.Delay(1);
-                                NetworkIO.I2CWrite(1, 0x1d, 3, 0xff & (byte)(currentFreq >> 08));
-                                await Task.Delay(1);
-                                NetworkIO.I2CWrite(1, 0x1d, 4, 0xff & (byte)(currentFreq >> 00));
-
-                                lastFreq = currentFreq;
-                            }
+                            ioBoard.setFrequency(currentFreq);
                             break;
 
                         case 9:
                         case 5: // Aerial selection
                             if (IOBoardAerialPorts != old_IOBoardAerialPorts)
                             {
-                                NetworkIO.I2CWrite(1, 0x1d, 31, IOBoardAerialPorts);
+                                ioBoard.writeRequest(IOBoard.Registers.REG_ANTENNA, IOBoardAerialPorts);
                                 old_IOBoardAerialPorts = IOBoardAerialPorts;
                             }
                             break;
@@ -26388,7 +26380,7 @@ namespace Thetis
 
                             if (CurrentMode != old_IOBoardMode)
                             {
-                                NetworkIO.I2CWrite(1, 0x1d, 32, CurrentMode);
+                                ioBoard.writeRequest(IOBoard.Registers.REG_OP_MODE, CurrentMode);
                                 old_IOBoardMode = CurrentMode;
                             }
                             break;
