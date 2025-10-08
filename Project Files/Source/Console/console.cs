@@ -30219,8 +30219,8 @@ namespace Thetis
                     }
                     ptbMic.Enabled = true;
                 }
-                else
-                    Audio.MicPreamp = Math.Pow(10.0, gain_db / 20.0); // convert to scalar 
+
+                Audio.MicPreamp = Math.Pow(10.0, gain_db / 20.0); // convert to scalar 
             }
             else
             {
@@ -30230,10 +30230,8 @@ namespace Thetis
                     ptbMic.Tag = Audio.VACPreamp;
                     Audio.VACPreamp = 0.0;
                 }
-                else
-                {
-                    Audio.MicPreamp = 0.0;
-                }
+
+                Audio.MicPreamp = 0.0;
             }
         }
         private void ptbCWSpeed_Scroll(object sender, System.EventArgs e)
