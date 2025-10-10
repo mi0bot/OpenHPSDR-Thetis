@@ -30176,7 +30176,7 @@ namespace Thetis
                 setAudioMicGain((double)ptbMic.Value);
 
                 // MI0BOT:  For HL2 Audio control is based on VFO and Mode
-                if (!IsSetupFormNull && HardwareSpecific.Model == HPSDRModel.HERMESLITE)
+                if (!IsSetupFormNull && cmaster.GetCMAstate() != 1 && HardwareSpecific.Model == HPSDRModel.HERMESLITE)
                 {
                     if (!(chkRX2.Checked && chkVAC2.Checked && chkVFOBTX.Checked))
                     {
@@ -30189,7 +30189,7 @@ namespace Thetis
                     }
                     else
                     {
-                        if (_rx2_dsp_mode != DSPMode.DIGU && _rx1_dsp_mode != DSPMode.DIGU)
+                        if (_rx2_dsp_mode != DSPMode.DIGU && _rx2_dsp_mode != DSPMode.DIGU)
                         {
                             lblMicVal.Text = "B " + ptbMic.Value.ToString() + " dB";
                             SetupForm.VAC2TXGain = ptbMic.Value;
@@ -30210,7 +30210,7 @@ namespace Thetis
         {
             if (chkMicMute.Checked)  // although it is called chkMicMute, checked = mic in use
             {
-                if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)      // MI0BOT:  For HL2 Audio control is based on VFO and Mode
+                if (cmaster.GetCMAstate() != 1 && HardwareSpecific.Model == HPSDRModel.HERMESLITE)      // MI0BOT:  For HL2 Audio control is based on VFO and Mode
                 {
                     if (ptbMic.Tag != null)
                     {
@@ -30224,7 +30224,7 @@ namespace Thetis
             }
             else
             {
-                if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)      // MI0BOT:  For HL2 Audio control is based on VFO and Mode
+                if (cmaster.GetCMAstate() != 1 && HardwareSpecific.Model == HPSDRModel.HERMESLITE)      // MI0BOT:  For HL2 Audio control is based on VFO and Mode
                 {
                     ptbMic.Enabled = false;
                     ptbMic.Tag = Audio.VACPreamp;
@@ -30311,30 +30311,38 @@ namespace Thetis
 
         private void ptbVACTXGain_Scroll(object sender, System.EventArgs e)
         {
-            if (RX1DSPMode != DSPMode.DIGU && RX1DSPMode != DSPMode.DIGL) return; // only change this vac gain if in digi mode
-
             lblTXGain.Text = "TX Gain:  " + ptbVACTXGain.Value.ToString();
+
             if (!IsSetupFormNull)
             {
-                if (!(chkRX2.Checked && chkVAC2.Checked && chkVFOBTX.Checked))
+                if (!(chkRX2.Checked && chkVAC2.Checked && chkVFOBTX.Checked) &&
+                   (RX1DSPMode == DSPMode.DIGU || RX1DSPMode == DSPMode.DIGL))   // only change this vac gain if in digi mode
                 {
                     lblVACRXIndicator.Text = "VAC1";
                     lblVACTXIndicator.Text = "VAC1";
                     SetupForm.VACTXGain = ptbVACTXGain.Value;
                     vac_tx_gain = ptbVACTXGain.Value;
+
+                    if (sender.GetType() == typeof(PrettyTrackBar))
+                    {
+                        ptbVACTXGain.Focus();
+                    }
                 }
                 else
                 {
-                    lblVACRXIndicator.Text = "VAC2";
-                    lblVACTXIndicator.Text = "VAC2";
-                    SetupForm.VAC2TXGain = ptbVACTXGain.Value;
-                    vac2_tx_gain = ptbVACTXGain.Value;
-                }
-            }
+                    if (RX2DSPMode == DSPMode.DIGU || RX2DSPMode == DSPMode.DIGL) // only change this vac gain if in digi mode
+                    {
+                        lblVACRXIndicator.Text = "VAC2";
+                        lblVACTXIndicator.Text = "VAC2";
+                        SetupForm.VAC2TXGain = ptbVACTXGain.Value;
+                        vac2_tx_gain = ptbVACTXGain.Value;
 
-            if (sender.GetType() == typeof(PrettyTrackBar))
-            {
-                ptbVACTXGain.Focus();
+                        if (sender.GetType() == typeof(PrettyTrackBar))
+                        {
+                            ptbVACTXGain.Focus();
+                        }
+                    }
+                }
             }
         }
 
@@ -41274,6 +41282,8 @@ namespace Thetis
                     chkVACStereo.Checked = vac_stereo;
                 }
 
+                ptbMic.Value = vac_tx_gain;
+
                 if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)     // MI0BOT:  For HL2 Audio control is based on VFO and Mode
                     ptbMic_Scroll(sender, e);
             }
@@ -41393,6 +41403,11 @@ namespace Thetis
 
                         chkVACStereo.Checked = vac2_stereo;
                     }
+
+                    ptbMic.Value = vac2_tx_gain;
+
+                    if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)     // MI0BOT:  For HL2 Audio control is based on VFO and Mode
+                        ptbMic_Scroll(sender, e);
                 }
             }
             else // button is unchecked
