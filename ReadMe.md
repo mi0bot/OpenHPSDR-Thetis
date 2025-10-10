@@ -1,4 +1,9 @@
-# Latest Release v2.10.3.11 Beta 1 1st October, 2025
+# Latest Release v2.10.3.11 Beta 2 10th October, 2025
+
+# 2.10.3.11 Beta 2 (2025-10-10)
+
+- Fixed Mic control not adjusting all gain controls
+- Added support for cmASIO for Mic control (Not tested). If cmASIO is enabled, Mic control will not adjust VAC controls.
 
 # 2.10.3.11 Beta 1 (2025-10-01)
 
