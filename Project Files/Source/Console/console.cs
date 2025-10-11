@@ -26160,7 +26160,7 @@ namespace Thetis
                             break;
 
                         case AutoTuneState.StartTune:               // Auto tune has been instigated from UI
-                            NetworkIO.I2CWrite(1, 0x1d, 7, (int) ProtocolEvent.RequestTune);   // Start the tune via the protocol
+                            ioBoard.writeRequest(IOBoard.Registers.REG_ANTENNA_TUNER, (int)ProtocolEvent.RequestTune);  // Start the tune via the protocol
                             auto_tuning = AutoTuneState.WaitRF;
                             tune_timeout = 0;
                             fault_timeout = 0;
@@ -26230,8 +26230,8 @@ namespace Thetis
             if (tune_timeout >= TIMEOUT)
             {                                       // Time out 
                 tune_timeout = 0;
-                NetworkIO.I2CWrite(1, 0x1d, 7, (int) ProtocolEvent.Idle);
-                
+                ioBoard.writeRequest(IOBoard.Registers.REG_ANTENNA_TUNER, (int)ProtocolEvent.Idle);
+
                 if (auto_tuning != AutoTuneState.Fault)
                     auto_tuning = AutoTuneState.Idle;
 
@@ -26242,6 +26242,7 @@ namespace Thetis
             return returnCode;
         }
 
+        private IOBoard ioBoard = null;
         private async void UpdateIOBoard()
         {
             long currentFreq, lastFreq = 0;
@@ -26253,7 +26254,7 @@ namespace Thetis
             byte timeout = 0;
             int status = 0;
 
-            IOBoard ioBoard = IOBoard.getIOBoard(this);
+            ioBoard = IOBoard.getIOBoard(this);
 
             // Read the hardware revision on bus 2 at address 0x41, register 0
 
@@ -31541,9 +31542,16 @@ namespace Thetis
                 NetworkIO.SetUserOut0(1);       // why this?? CHECK
                 NetworkIO.SetUserOut2(1);
 
-                if ((apollopresent && apollo_tuner_enabled) ||
-                    ((HardwareSpecific.Model == HPSDRModel.HERMESLITE) && AriesStandalone))
-                    NetworkIO.EnableApolloAutoTune(1);
+                if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)
+                {
+                    if (AriesStandalone)
+                        NetworkIO.EnableApolloAutoTune(1);  // MI0BOT: Cause tune dip at start
+                }
+                else
+                {
+                    if (apollopresent && apollo_tuner_enabled)
+                        NetworkIO.EnableApolloAutoTune(1);
+                }
             }
             else
             {
