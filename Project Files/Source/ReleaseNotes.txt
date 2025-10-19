@@ -2,6 +2,11 @@ This is the Thetis version for the Hermes Lite 2.
 
 Please report any bugs on [GitHub here](https://github.com/mi0bot/OpenHPSDR-Thetis/issues/new/choose).
 
+# 2.10.3.11 (2025-10-19)
+
+- Fixed amASIO mic gain issue
+- Fixed control of break at start of Tune
+
 # 2.10.3.11 Beta 2 (2025-10-10)
 
 - Fixed Mic control not adjusting all gain controls

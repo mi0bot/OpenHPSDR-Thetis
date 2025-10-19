@@ -1,4 +1,9 @@
-# Latest Release v2.10.3.11 Beta 2 10th October, 2025
+# Latest Release v2.10.3.11 19th October, 2025
+
+# 2.10.3.11 (2025-10-19)
+
+- Fixed amASIO mic gain issue
+- Fixed control of break at start of Tune
 
 # 2.10.3.11 Beta 2 (2025-10-10)
 

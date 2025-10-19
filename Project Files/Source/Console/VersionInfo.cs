@@ -6,6 +6,6 @@ namespace Thetis
 { 
     public static class VersionInfo 
     { 
-        public static string BuildDate { get { return "10/10/25"; } }  
+        public static string BuildDate { get { return "10/19/25"; } }  
     } 
 } 
