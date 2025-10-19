@@ -24,6 +24,20 @@ The author can be reached by email at
 
 mw0lge@grange-lane.co.uk
 */
+//
+//============================================================================================//
+// Dual-Licensing Statement (Applies Only to Author's Contributions, Richard Samphire MW0LGE) //
+// ------------------------------------------------------------------------------------------ //
+// For any code originally written by Richard Samphire MW0LGE, or for any modifications       //
+// made by him, the copyright holder for those portions (Richard Samphire) reserves the       //
+// right to use, license, and distribute such code under different terms, including           //
+// closed-source and proprietary licences, in addition to the GNU General Public License      //
+// granted above. Nothing in this statement restricts any rights granted to recipients under  //
+// the GNU GPL. Code contributed by others (not Richard Samphire) remains licensed under      //
+// its original terms and is not affected by this dual-licensing statement in any way.        //
+// Richard Samphire can be reached by email at :  mw0lge@grange-lane.co.uk                    //
+//============================================================================================//
+
 
 // info from
 // https://www.codeproject.com/Articles/5733/A-TCP-IP-Server-written-in-C
@@ -1014,28 +1028,18 @@ namespace Thetis
 				}
 				catch (SocketException se)
 				{
-					//if (se.SocketErrorCode == SocketError.WouldBlock ||
-					//	se.SocketErrorCode == SocketError.IOPending ||
-					//	se.SocketErrorCode == SocketError.NoBufferSpaceAvailable)
-					//{
-					//	Thread.Sleep(50);
-					//}
-					//else
-					//{
-						m_stopClient = true;
-						m_markedForDeletion = true;
-
-						ClientErrorHandlers?.Invoke(se);
-					//}
+					m_stopClient = true;
+					ClientErrorHandlers?.Invoke(se);
 				}
                 catch
                 {
 					m_stopClient = true;
-					m_markedForDeletion = true;
 				}
 			}
 
-			t.Change(Timeout.Infinite, Timeout.Infinite);
+            m_markedForDeletion = true;
+
+            t.Change(Timeout.Infinite, Timeout.Infinite);
 			t = null;
 
 			Debug.Print("TCPIP TCI Client Disconnected !");
@@ -1094,7 +1098,7 @@ namespace Thetis
 					}
 				}
 			}
-			catch(Exception ex)
+			catch(Exception)
 			{
 				Debug.Print("problem writing text frame");
 				m_stopClient = true;

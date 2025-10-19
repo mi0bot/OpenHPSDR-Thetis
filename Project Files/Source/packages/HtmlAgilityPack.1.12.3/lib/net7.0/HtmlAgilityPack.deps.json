@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v7.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v7.0": {
+      "HtmlAgilityPack/1.12.3": {
+        "runtime": {
+          "HtmlAgilityPack.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "HtmlAgilityPack/1.12.3": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
