@@ -36525,6 +36525,12 @@ namespace Thetis
                 lblModeBigLabel.Text = radiobut;
             }
 
+            if (HardwareSpecific.Model == HPSDRModel.HERMESLITE &&
+                cmaster.GetCMAstate() == 0)                         // MI0BOT:  For HL2 Audio control is based on VFO and Mode - correct label
+            {
+                ptbMic_Scroll(sender, e);
+            }
+
             lSBToolStripMenuItem.Checked = radModeLSB.Checked;
             uSBToolStripMenuItem.Checked = radModeUSB.Checked;
             dSBToolStripMenuItem.Checked = radModeDSB.Checked;
@@ -40313,6 +40319,12 @@ namespace Thetis
 
             //setRX2ModeLabels(radiobut); //MW0LGE_21j
             setSmallRX2ModeFilterLabels();
+
+            if (HardwareSpecific.Model == HPSDRModel.HERMESLITE &&
+                cmaster.GetCMAstate() == 0)                         // MI0BOT:  For HL2 Audio control is based on VFO and Mode - correct label
+            {
+                ptbMic_Scroll(sender, e);
+            }
 
             lSBToolStripMenuItem1.Checked = radRX2ModeLSB.Checked;
             uSBToolStripMenuItem1.Checked = radRX2ModeUSB.Checked;
