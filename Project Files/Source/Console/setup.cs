@@ -30024,7 +30024,7 @@ namespace Thetis
                     if (Directory.Exists(sSkinPath))
                         Directory.Delete(sSkinPath, true);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     dres = MessageBox.Show(
                                 "There was an isssue deleting [" + sSelectedSkin + "] from the skin folder.\n\nSome files would not delete.\n\nPlease remove manually.",

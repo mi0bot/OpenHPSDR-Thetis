@@ -25733,7 +25733,7 @@ namespace Thetis
                         }
                         finally
                         {
-                            _lastSaveTime = DateTime.Now;
+                            _lastSaveTime = DateTime.UtcNow;
                         }
 
                         if (now.Subtract(_firstSaveTime).TotalMinutes >= 60)
