@@ -1,0 +1,24 @@
+{
+  "SkinServers": [
+    {
+      "SkinServerUrl": "https://raw.githubusercontent.com/ramdor/ThetisSkins/main/thetis_skins.json",
+      "Description": "Thetis default skins",
+      "BypassRootFolderCheck": false
+    },    
+    {
+      "SkinServerUrl": "https://www.oe3ide.com/wordp/wp-content/uploads/thetisskins/thetis_skins.json",
+      "Description": "OE3IDE's various skins",
+      "BypassRootFolderCheck": false
+    },
+    {
+      "SkinServerUrl": "https://www.w1aex.com/hpsdr/thetis_skins.json",
+      "Description": "W1AEX's many skins",
+      "BypassRootFolderCheck": true
+    },
+    {
+      "SkinServerUrl": "http://www.die-jetzis.de/skins/thetis_skins.json",
+      "Description": "DH1KLM's big collection",
+      "BypassRootFolderCheck": false
+    }
+  ]
+}
