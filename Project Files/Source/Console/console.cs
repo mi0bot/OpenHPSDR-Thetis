@@ -30509,7 +30509,7 @@ namespace Thetis
                 setAudioMicGain((double)ptbMic.Value);
 
                 // MI0BOT:  For HL2 Audio control is based on VFO and Mode
-                if (!IsSetupFormNull && cmaster.GetCMAstate() == 0 && HardwareSpecific.Model == HPSDRModel.HERMESLITE)
+                if (!IsSetupFormNull && HardwareSpecific.Model == HPSDRModel.HERMESLITE)
                 {
                     if (!(chkRX2.Checked && chkVAC2.Checked && chkVFOBTX.Checked))
                     {
@@ -30543,7 +30543,7 @@ namespace Thetis
         {
             if (chkMicMute.Checked)  // although it is called chkMicMute, checked = mic in use
             {
-                if (cmaster.GetCMAstate() == 0 && HardwareSpecific.Model == HPSDRModel.HERMESLITE)      // MI0BOT:  For HL2 Audio control is based on VFO and Mode
+                if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)      // MI0BOT:  For HL2 Audio control is based on VFO and Mode
                 {
                     if (ptbMic.Tag != null)
                     {
@@ -30557,7 +30557,7 @@ namespace Thetis
             }
             else
             {
-                if (cmaster.GetCMAstate() == 0 && HardwareSpecific.Model == HPSDRModel.HERMESLITE)      // MI0BOT:  For HL2 Audio control is based on VFO and Mode
+                if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)      // MI0BOT:  For HL2 Audio control is based on VFO and Mode
                 {
                     ptbMic.Enabled = false;
                     ptbMic.Tag = Audio.VACPreamp;
