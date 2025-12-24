@@ -135,6 +135,15 @@ namespace Thetis
             
             if (rebuilt)
             {
+                // wisdom00 rebuilt, so remove any existing impulse cache as it is now invalid
+                // best that we start afresh, because depending on config this may be left behind
+                try
+                {
+                    string file = Path.Combine(app_data_path, "impulse_cache.dat");
+                    if (File.Exists(file)) File.Delete(file);
+                }
+                catch { }
+
                 // wisdom has been rebuilt, pop a message
                 MessageBox.Show("The fft wisdom file has been rebuilt.\n\nIt is now safe to close the output console window.", "Wisdom File", MessageBoxButtons.OK, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, Common.MB_TOPMOST);
             }
@@ -336,6 +345,7 @@ namespace Thetis
             this.RXAPFFreq = rx.rx_apf_freq;
             this.RXAPFBw = rx.rx_apf_bw;
             this.RXAPFGain = rx.rx_apf_gain;
+            this.RXAPFType = rx._rx_apf_type;
             this.RXADollyRun = rx.rx_dolly_run;
             this.RXADollyFreq0 = rx.rx_dolly_freq0;
             this.RXADollyFreq1 = rx.rx_dolly_freq1;
@@ -433,6 +443,7 @@ namespace Thetis
             RXAPFFreq = rx_apf_freq;
             RXAPFBw = rx_apf_bw;
             RXAPFGain = rx_apf_gain;
+            RXAPFType = _rx_apf_type;
             RXADollyRun = rx_dolly_run;
             RXADollyFreq0 = rx_dolly_freq0;
             RXADollyFreq1 = rx_dolly_freq1;
@@ -1931,6 +1942,25 @@ namespace Thetis
                     {
                         WDSP.SetRXASPCWGain(WDSP.id(thread, subrx), value);
                         rx_apf_gain_dsp = value;
+                    }
+                }
+            }
+        }
+
+        private int _rx_apf_type_dsp = 3; //0=double pole, 1=matched, 2=gaussain, 3=bi-quad
+        private int _rx_apf_type = 3;
+        public int RXAPFType
+        {
+            get { return _rx_apf_type; }
+            set
+            {
+                _rx_apf_type = value;
+                if (update)
+                {
+                    if (value != _rx_apf_type_dsp || force)
+                    {
+                        WDSP.SetRXASPCWSelection(WDSP.id(thread, subrx), value);
+                        _rx_apf_type_dsp = value;
                     }
                 }
             }

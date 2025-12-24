@@ -47,6 +47,7 @@
 // Richard Samphire can be reached by email at :  mw0lge@grange-lane.co.uk                    //
 //============================================================================================//
 
+// Migrated to VS2026 - 18/12/25 MW0LGE v2.10.3.12
 
 using Midi2Cat.Data; //-W2PA Necessary for Behringer MIDI changes
 
@@ -80,6 +81,8 @@ namespace Thetis
         public const bool CHECK_DEV_VERSION = true; // this will check github for dev versions, set to false when performing a release
 
         public const int MAX_FPS = 640;
+
+        
 
         #region Variable Declarations
         // ======================================================
@@ -1538,10 +1541,14 @@ namespace Thetis
                 }
                 else
                 {
-                    string msg = ex.Message + "\n\n" + ex.StackTrace.ToString();
-                    if (ex.InnerException != null) msg += "\n\n" + ex.InnerException.Message;
+                    //string msg = ex.Message + "\n\n" + ex.StackTrace.ToString();
+                    //if (ex.InnerException != null) msg += "\n\n" + ex.InnerException.Message;
+                    //MessageBox.Show(msg, "Fatal Error",
+                    //    MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, Common.MB_TOPMOST);
+                    string msg = build_exception_text(ex);
                     MessageBox.Show(msg, "Fatal Error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, Common.MB_TOPMOST);
+                        MessageBoxButtons.OK, MessageBoxIcon.Error,
+                        MessageBoxDefaultButton.Button1, Common.MB_TOPMOST);
                 }
                 Application.Exit();
             }
@@ -1550,6 +1557,22 @@ namespace Thetis
             {
                 Application.Restart();
             }
+        }
+        static string build_exception_text(Exception ex)
+        {
+            StringBuilder sb = new StringBuilder();
+            Exception current = ex;
+
+            while (current != null)
+            {
+                sb.AppendLine(current.GetType().FullName);
+                sb.AppendLine(current.Message);
+                sb.AppendLine(current.StackTrace);
+                sb.AppendLine();
+                current = current.InnerException;
+            }
+
+            return sb.ToString();
         }
         private static bool a()
         {
@@ -2211,7 +2234,7 @@ namespace Thetis
             qsk_sidetone_volume = SetupForm.TXAF;
             non_qsk_agc = RX1AGCMode;
             non_qsk_agc_hang_thresh = SetupForm.AGCRX1HangThreshold;//SetupForm.AGCHangThreshold; //MW0LGE_21k8
-            non_qsk_ATTOnTX = m_bAttontx;
+            non_qsk_ATTOnTX = m_bATTonTX;
             non_qsk_ATTOnTXVal = SetupForm.ATTOnTX;
             non_qsk_breakin_delay = break_in_delay;
             RX1Band_changing_to = RX1Band;
@@ -2481,87 +2504,6 @@ namespace Thetis
         {
             Debug.Print("TCI Server Error : " + se.Message);
         }
-
-        private bool m_bTCICWbecomesCWUabove10mhz = false;
-        public bool TCICWbecomesCWUabove10mhz
-        {
-            get { return m_bTCICWbecomesCWUabove10mhz; }
-            set
-            {
-                m_bTCICWbecomesCWUabove10mhz = value;
-                if (m_tcpTCIServer != null) m_tcpTCIServer.CWbecomesCWUabove10mhz = m_bTCICWbecomesCWUabove10mhz;
-            }
-        }
-        private bool m_bTCICWLUbecomesCW = false;
-        public bool TCICWLUbecomesCW
-        {
-            get { return m_bTCICWLUbecomesCW; }
-            set
-            {
-                m_bTCICWLUbecomesCW = value;
-                if (m_tcpTCIServer != null) m_tcpTCIServer.CWLUbecomesCW = m_bTCICWLUbecomesCW;
-            }
-        }
-        private bool m_bEmulateSunSDR2Pro = false;
-        public bool EmulateSunSDR2Pro
-        {
-            get { return m_bEmulateSunSDR2Pro; }
-            set
-            {
-                m_bEmulateSunSDR2Pro = value;
-                if (m_tcpTCIServer != null) m_tcpTCIServer.EmulateSunSDR2Pro = m_bEmulateSunSDR2Pro;
-            }
-        }
-        private bool m_bEmulateExpertSDR3Protocol = false;
-        public bool EmulateExpertSDR3Protocol
-        {
-            get { return m_bEmulateExpertSDR3Protocol; }
-            set
-            {
-                m_bEmulateExpertSDR3Protocol = value;
-                if (m_tcpTCIServer != null) m_tcpTCIServer.EmulateExpertSDR3Protocol = m_bEmulateExpertSDR3Protocol;
-            }
-        }
-        private bool m_bTCIuseRX1vfoaForRX2vfoa = false;
-        public bool TCIuseRX1vfoaForRX2vfoa
-        {
-            get { return m_bTCIuseRX1vfoaForRX2vfoa; }
-            set
-            {
-                m_bTCIuseRX1vfoaForRX2vfoa = value;
-                if (m_tcpTCIServer != null) m_tcpTCIServer.UseRX1VFOaForRX2VFOa = m_bTCIuseRX1vfoaForRX2vfoa;
-            }
-        }
-        private bool m_bTCIcopyRX2VFObToVFOa = false;
-        public bool TCIcopyRX2VFObToVFOa
-        {
-            get { return m_bTCIcopyRX2VFObToVFOa; }
-            set
-            {
-                m_bTCIcopyRX2VFObToVFOa = value;
-                if (m_tcpTCIServer != null) m_tcpTCIServer.CopyRX2VFObToVFOa = m_bTCIcopyRX2VFObToVFOa;
-            }
-        }
-        private bool m_bTCIreplaceRX2VFObToVFOa = false;
-        public bool TCIreplaceRX2VFObToVFOa
-        {
-            get { return m_bTCIreplaceRX2VFObToVFOa; }
-            set
-            {
-                m_bTCIreplaceRX2VFObToVFOa = value;
-                if (m_tcpTCIServer != null) m_tcpTCIServer.ReplaceRX2VFObToVFOa = m_bTCIreplaceRX2VFObToVFOa;
-            }
-        }
-        private bool m_bTCIsendInitialStateOnConnect = true;
-        public bool TCIsendInitialStateOnConnect
-        {
-            get { return m_bTCIsendInitialStateOnConnect; }
-            set
-            {
-                m_bTCIsendInitialStateOnConnect = value;
-                if (m_tcpTCIServer != null) m_tcpTCIServer.SendInitialFrequencyStateOnConnect = m_bTCIsendInitialStateOnConnect;
-            }
-        }
         public void ShowTCILog()
         {
             if (m_tcpTCIServer != null) m_tcpTCIServer.ShowLog();
@@ -2581,7 +2523,7 @@ namespace Thetis
 
                     addTCIDelegates();
 
-                    m_tcpTCIServer.StartServer(this, rateLimit, m_bTCIcopyRX2VFObToVFOa, m_bTCIuseRX1vfoaForRX2vfoa, m_bTCIsendInitialStateOnConnect, m_bTCICWLUbecomesCW, m_bEmulateSunSDR2Pro, m_bEmulateExpertSDR3Protocol, m_bTCIreplaceRX2VFObToVFOa, m_bTCICWbecomesCWUabove10mhz);
+                    m_tcpTCIServer.StartServer(this, rateLimit);
 
                     if (!m_tcpTCIServer.IsServerRunning)
                     {
@@ -2603,6 +2545,10 @@ namespace Thetis
                 }
             }
             UpdateStatusBarStatusIcons(StatusBarIconGroup.TCI);
+        }
+        public TCPIPtciServer TCIServer
+        {
+            get { return m_tcpTCIServer; }
         }
         //
 
@@ -3512,6 +3458,9 @@ namespace Thetis
             double dRX1_centre_freq = 7.1;
             double dRX2_centre_freq = 7.1;
 
+            bool bClickTuneRX1 = false;
+            bool bClickTuneRX2 = false;
+
             foreach (string s in a)				// string is in the format "name,value"
             {
                 int start, length, index, filter_mode;
@@ -3535,7 +3484,11 @@ namespace Thetis
                     case "udFilterHigh":
                     case "udRX2FilterLow":
                     case "udRX2FilterHigh":
-                        //[2.10.3]MW0LGE ignore section, in the case of the filter ud controls, they will be set by the filter being selected
+                    case "ptbVACRXGain":
+                    case "ptbVACTXGain":
+                        //ignore section
+                        //in the case of the filter ud controls, they will be set by the filter being selected
+                        //in the case of ptbVAC gains, they will be set by the TX profile
                         break;
 
                     case "last_radio_protocol":
@@ -3748,7 +3701,8 @@ namespace Thetis
                         rx2_voice_squelch_threshold_scroll = int.Parse(val);
                         break;
                     case "click_tune_display":
-                        _click_tune_display = bool.Parse(val);
+                        //_click_tune_display = bool.Parse(val); // now done below
+                        bClickTuneRX1 = bool.Parse(val);
                         break;
                     case "VFOAFreq":
                         dVFOAFreq = double.Parse(val); // MW0LGE_21c need to do this at end, as we used center_freq etc
@@ -3757,7 +3711,8 @@ namespace Thetis
                         dRX1_centre_freq = double.Parse(val);
                         break;
                     case "click_tune_rx2_display":
-                        _click_tune_rx2_display = bool.Parse(val);
+                        //_click_tune_rx2_display = bool.Parse(val); // now done below
+                        bClickTuneRX2 = bool.Parse(val);
                         break;
                     case "VFOBFreq":
                         dVFOBFreq = double.Parse(val); // MW0LGE_21c need to do this at end, as we used center_freq etc
@@ -4643,6 +4598,33 @@ namespace Thetis
                     case var nam when name.StartsWith("ptb"):
                         if (ctrls.ContainsKey(name)) ((PrettyTrackBar)ctrls[name]).Value = Int32.Parse(val);
                         break;
+                }
+            }
+
+            //[2.10.1.12]MW0LGE - apply CTUN state, and done above CentreFrequency assignment below
+            //Will inform the display engine of the ctun state via the delegate
+            //NOTE: ideally _click_tune_display will already equal bClickTuneRX1 as the chk will have happened in the loop above,
+            //so this should not be needed, but here for belts/braces
+            if (_click_tune_display != bClickTuneRX1)
+            {
+                if (chkFWCATU.Checked == bClickTuneRX1)
+                {
+                    chkFWCATU_CheckedChanged(this, EventArgs.Empty);
+                }
+                else
+                {
+                    chkFWCATU.Checked = bClickTuneRX1;
+                }
+            }
+            if (_click_tune_rx2_display != bClickTuneRX2)
+            {
+                if (chkX2TR.Checked == bClickTuneRX2)
+                {
+                    chkX2TR_CheckedChanged(this, EventArgs.Empty);
+                }
+                else
+                {
+                    chkX2TR.Checked = bClickTuneRX2;
                 }
             }
 
@@ -10950,7 +10932,7 @@ namespace Thetis
                 if (!initializing)
                 {
                     setTXstepAttenuatorForBand(_tx_band, _tx_attenuator_data); //[2.10.3.6]MW0LGE att_fixes #399
-                    if (m_bAttontx)
+                    if (m_bATTonTX)
                     {
                         //int txatt = getTXstepAttenuatorForBand(_tx_band);
                         
@@ -10980,7 +10962,7 @@ namespace Thetis
                     //******Red Pitaya BODGE*******
                     //[2.10.3.9]MW0LGE This is not ideal, but a bodge to get the PedPitaya to TX attenuate correctly
                     //I am not entirely sure why this is needed, perhaps an issue in the RP firmware
-                    if (_mox && m_bAttontx && HardwareSpecific.Model == HPSDRModel.REDPITAYA)
+                    if (_mox && m_bATTonTX && HardwareSpecific.Model == HPSDRModel.REDPITAYA)
                     {
                         //note: I am usure if the RP would handle rx2 being changed as below, but it is here for completeness
 
@@ -12365,7 +12347,7 @@ namespace Thetis
             set { allow_mox_bypass = value; }
         }
 
-        private bool _allow_micvox_bypass = false;
+        private volatile bool _allow_micvox_bypass = false;
         public bool AllowMICVOXBypass
         {
             get { return _allow_micvox_bypass; }
@@ -13558,12 +13540,14 @@ namespace Thetis
             }
         }
 
+        private volatile bool _vox_enable = false;
         public bool VOXEnable
         {
             get
             {
-                if (chkVOX != null) return chkVOX.Checked;
-                else return false;
+                return _vox_enable;
+                //if (chkVOX != null) return chkVOX.Checked;
+                //else return false;
             }
             set
             {
@@ -15592,32 +15576,18 @@ namespace Thetis
 
         public CheckState VFOLock { get; set; } = CheckState.Unchecked;
 
-        private bool vfoA_lock = false;
+        private bool _vfoA_lock = false;
         public bool VFOALock
         {
-            get { return vfoA_lock; }
+            get { return _vfoA_lock; }
             set
             {
-                bool old_state = vfoA_lock;
-                //bool enabled = true;
-                vfoA_lock = value;
-                //switch (vfoA_lock)
-                //{
-                //    case false:
-                //        txtVFOAFreq.Enabled = true;
-                //        break;
-                //    case true:
-                //        enabled = false;
-                //        txtVFOAFreq.Enabled = false;
-                //        break;
-                //}
-                //[2.3.10.6]MW0LGE whoever did the commented code above needs to step away from the computer, how about if else????
-                bool enabled = !vfoA_lock;
-                txtVFOAFreq.Enabled = enabled;
-                if (vfoA_lock) chkVFOSync.Checked = false;
+                bool old_state = _vfoA_lock;
+                _vfoA_lock = value;
 
-                if (vfoA_lock)
+                if (_vfoA_lock)
                 {
+                    chkVFOSync.Checked = false; // disable vfo sync if locking
                     DisableAllBands();
                     DisableAllModes();
                 }
@@ -15627,61 +15597,51 @@ namespace Thetis
                     EnableAllModes();
                 }
 
+                bool enabled = !_vfoA_lock;
+                txtVFOAFreq.Enabled = enabled;
                 btnVFOBtoA.Enabled = enabled;
                 btnVFOSwap.Enabled = enabled;
-
                 btnMemoryQuickRestore.Enabled = enabled;
 
-                if (vfoA_lock)
+                if (_vfoA_lock)
                     lblLockLabel.BackColor = System.Drawing.Color.Blue;
                 else
                     lblLockLabel.BackColor = System.Drawing.Color.Transparent;
                 lblLockLabel.Invalidate();
 
-                AndromedaIndicatorCheck(EIndicatorActions.eINVFOLock, true, vfoA_lock);
+                AndromedaIndicatorCheck(EIndicatorActions.eINVFOLock, true, _vfoA_lock);
 
-                chkVFOLock.Checked = vfoA_lock;
+                chkVFOLock.Checked = _vfoA_lock;
 
-                if (vfoA_lock != old_state)
+                if (_vfoA_lock != old_state)
                 {
-                    VfoALockChangedHandlers?.Invoke(1, old_state, vfoA_lock);
-                    old_state = vfoA_lock;
+                    VfoALockChangedHandlers?.Invoke(1, old_state, _vfoA_lock);
+                    old_state = _vfoA_lock;
                 }
 
                 SetGeneralSetting(0, OtherButtonId.LOCK_A, chkVFOLock.Checked);
             }
         }
 
-        private bool vfoB_lock = false;
+        private bool _vfoB_lock = false;
         public bool VFOBLock
         {
-            get { return vfoB_lock; }
+            get { return _vfoB_lock; }
             set
             {
-                bool old_state = vfoB_lock;
-                //bool enabled = true;
-                vfoB_lock = value;
-                //switch (vfoB_lock)
-                //{
-                //    case false:
-                //        txtVFOBFreq.Enabled = true;
-                //        break;
-                //    case true:
-                //        enabled = false;
-                //        txtVFOBFreq.Enabled = false;
-                //        chkVFOSync.Checked = false;
-                //        break;
-                //}
-                //[2.3.10.6]MW0LGE whoever did the commented code above needs to step away from the computer, how about if else????
-                bool enabled = !vfoB_lock;
-                txtVFOBFreq.Enabled = enabled;
-                if (vfoB_lock) chkVFOSync.Checked = false;
+                bool old_state = _vfoB_lock;
+                _vfoB_lock = value;
 
+                if (_vfoB_lock)
+                {
+                    chkVFOSync.Checked = false;
+                }
+
+                bool enabled = !_vfoB_lock;
+                txtVFOBFreq.Enabled = enabled;
                 comboRX2Band.Enabled = enabled;
                 btnVFOAtoB.Enabled = enabled;
                 chkVFOSync.Enabled = enabled;
-
-
                 radRX2ModeLSB.Enabled = enabled;
                 radRX2ModeUSB.Enabled = enabled;
                 radRX2ModeDSB.Enabled = enabled;
@@ -15695,20 +15655,19 @@ namespace Thetis
                 radRX2ModeDIGU.Enabled = enabled;
                 radRX2ModeDRM.Enabled = enabled;
 
-                if (vfoB_lock)
+                if (_vfoB_lock)
                     lblRX2LockLabel.BackColor = System.Drawing.Color.Blue;
                 else
                     lblRX2LockLabel.BackColor = System.Drawing.Color.Transparent;
 
-                AndromedaIndicatorCheck(EIndicatorActions.eINVFOLock, false, vfoB_lock); // <- this use of false is totally wrong, because if RX2 is in use, then lock B is RX2.
-                                                                                         // I just cba to fix it, as this sort of thing keeps being done. -LGE
+                AndromedaIndicatorCheck(EIndicatorActions.eINVFOLock, !RX2Enabled, _vfoB_lock);                                                                                          
 
-                chkVFOBLock.Checked = vfoB_lock;
+                chkVFOBLock.Checked = _vfoB_lock;
 
-                if (vfoB_lock != old_state)
+                if (_vfoB_lock != old_state)
                 {
-                    VfoBLockChangedHandlers?.Invoke(RX2Enabled ? 2 : 1, old_state, vfoB_lock);
-                    old_state = vfoB_lock;
+                    VfoBLockChangedHandlers?.Invoke(RX2Enabled ? 2 : 1, old_state, _vfoB_lock);
+                    old_state = _vfoB_lock;
                 }
 
                 SetGeneralSetting(0, OtherButtonId.LOCK_B, chkVFOBLock.Checked);
@@ -16533,10 +16492,10 @@ namespace Thetis
             }
         }
 
-        private int cat_apf_status = 0;
+        private int _cat_apf_status = 0;
         public int CATAPF
         {
-            get { return cat_apf_status; }
+            get { return _cat_apf_status; }
             set
             {
                 if (value == 0)
@@ -18066,33 +18025,19 @@ namespace Thetis
         // Added 06/24/05 BT for CAT commands
         public bool CATVFOLock
         {
-            get { return chkVFOLock.Checked; }
+            get { return VFOALock; }
             set
             {
-                //[2.10.3.5]MW0LGE has to be a joke, just dupe code why not
                 VFOALock = value;
-
-                //chkVFOLock.Checked = value;
-                //if (value == true)
-                //    lblLockLabel.BackColor = System.Drawing.Color.Blue;
-                //else
-                //    lblLockLabel.BackColor = System.Drawing.Color.Transparent;
             }
         }
 
         public bool CATVFOBLock
         {
-            get { return chkVFOBLock.Checked; }
+            get { return VFOBLock; }
             set
             {
-                //[2.10.3.5]MW0LGE has to be a joke, just dupe code why not
                 VFOBLock = value;
-
-                //chkVFOBLock.Checked = value;
-                //if (value == true)
-                //    lblRX2LockLabel.BackColor = System.Drawing.Color.Blue;
-                //else
-                //    lblRX2LockLabel.BackColor = System.Drawing.Color.Transparent;
             }
         }
 
@@ -18891,7 +18836,7 @@ namespace Thetis
             }
             set
             {
-                if (!_force_vfo_update && vfoA_lock || IsSetupFormNull) return; //[2.10.3.5]MW0LGE removed the state check //[2.10.3.7]MW0LGE always process if initialising
+                if ((!_force_vfo_update && _vfoA_lock) || IsSetupFormNull) return; //[2.10.3.5]MW0LGE removed the state check //[2.10.3.7]MW0LGE always process if initialising
                 if (!this.InvokeRequired)
                 {
                     VFOAUpdate(value);
@@ -18951,7 +18896,7 @@ namespace Thetis
 
             set
             {
-                if (!_force_vfo_update && vfoA_lock || IsSetupFormNull) return; //[2.10.3.6]MW0LGE removed the state check //[2.10.3.7]MW0LGE always process if initialising
+                if ((!_force_vfo_update && _vfoA_lock) || IsSetupFormNull) return; //[2.10.3.6]MW0LGE removed the state check //[2.10.3.7]MW0LGE always process if initialising
                 if (!this.InvokeRequired)
                 {
                     VFOASubUpdate(value);
@@ -18973,7 +18918,7 @@ namespace Thetis
             }
             set
             {
-                if (!_force_vfo_update && (vfoB_lock || IsSetupFormNull)) return; //[2.10.3.5]MW0LGE removed state check //[2.10.3.7]MW0LGE always process if initialising
+                if ((!_force_vfo_update && _vfoB_lock) || IsSetupFormNull) return; //[2.10.3.5]MW0LGE removed state check //[2.10.3.7]MW0LGE always process if initialising
                 value = Math.Max(0, value);
                 if (!this.InvokeRequired)
                 {
@@ -19138,6 +19083,36 @@ namespace Thetis
                 }
             }
         }
+        private int _apf_type = 3; // default to bi-quad
+        public int APFType
+        {
+            get { return _apf_type; }
+            set
+            {
+                if (value < 0 || value > 3) return;
+                if (value == _apf_type) return; // also prevents recurson from setup
+
+                _apf_type = value;
+                SetupForm.SetAPFType(_apf_type);
+
+                if (btnAPF_type == null) return; // belts & braces
+                switch (_apf_type)
+                {
+                    case 0:
+                        btnAPF_type.Text = "DP";
+                        break;
+                    case 1:
+                        btnAPF_type.Text = "MA";
+                        break;
+                    case 2:
+                        btnAPF_type.Text = "GA";
+                        break;
+                    case 3:
+                        btnAPF_type.Text = "BI";
+                        break;
+                }
+            }
+        }
 
         private bool _cat_ptt = false;
         public bool CATPTT
@@ -19255,20 +19230,6 @@ namespace Thetis
                 return channels_60m;
             }
         }
-
-        private bool pennylanepresent = true;
-        public bool PennyLanePresent
-        {
-            get { return pennylanepresent; }
-            set
-            {
-                pennylanepresent = true;
-                cmaster.CMSetTXOutputLevelRun();
-            }
-        }
-
-        public bool PennyPresent = false;
-        public bool MercuryPresent = false;
 
         private bool disable_6m_lna_on_rx = false;
         public bool Disable6mLNAonRX
@@ -19621,19 +19582,19 @@ namespace Thetis
             }
         }
 
-        private bool m_bAttontx = true;
+        private bool m_bATTonTX = true;
         public bool ATTOnTX
         {
-            get { return m_bAttontx; }
+            get { return m_bATTonTX; }
             set
             {
                 if (!value && _auto_attTX_when_not_in_ps) return; // ignore in this case
-                m_bAttontx = value;
+                m_bATTonTX = value;
                 updateAttNudsCombos();
 
                 if (PowerOn)
                 {
-                    if (m_bAttontx)
+                    if (m_bATTonTX)
                     {
                         int txatt = getTXstepAttenuatorForBand(_tx_band);
                         
@@ -20410,7 +20371,7 @@ namespace Thetis
             }
         }
 
-        private bool vac_enabled = false;
+        private volatile bool vac_enabled = false;
         public bool VACEnabled
         {
             get { return vac_enabled; }
@@ -20428,7 +20389,7 @@ namespace Thetis
             }
         }
 
-        private bool vac2_enabled = false;
+        private volatile bool vac2_enabled = false;
         public bool VAC2Enabled
         {
             get { return vac2_enabled; }
@@ -26726,7 +26687,8 @@ namespace Thetis
                 {
                     bool mic_ptt = (dotdashptt & 0x01) != 0; // PTT from radio
                     bool cw_ptt = CWInput.KeyerPTT && _current_breakin_mode == BreakIn.Semi; // CW serial PTT  //[2.10.3.9]MW0LGE only want to do this on semi breakin
-                    bool vox_ptt = Audio.VOXActive;
+                    bool vox_ok = !_mic_muted || ((vac_enabled || vac2_enabled) && !_allow_micvox_bypass); // fix for #596
+                    bool vox_ptt = vox_ok && Audio.VOXActive;
                     bool cat_ptt = (_ptt_bit_bang_enabled && serialPTT != null && serialPTT.isPTT()) | // CAT serial PTT
                                    (!_ptt_bit_bang_enabled && CWInput.CATPTT) | _cat_ptt;
 
@@ -27033,7 +26995,7 @@ namespace Thetis
                 return;
             }
 
-            if (!_mox && m_bAttontx && !initializing)
+            if (!_mox && m_bATTonTX && !initializing)
             {
                 if (update_preamp_mode && !update_preamp_mutex)
                 {
@@ -27270,6 +27232,8 @@ namespace Thetis
                     //[2.10.3.6]MW0LGE modifications to use setup config for swr and tune ignore power. Implements #221 (https://github.com/ramdor/Thetis/issues/221)
                     if (alexpresent || apollopresent)
                     {
+                        // open antenna connection dectection, ignored if tuning or 8000 model
+
                         // in following 'if', K2UE recommends not checking open antenna for the 8000 model
                         // if (swrprotection && alex_fwd > 10.0f && (alex_fwd - alex_rev) < 1.0f)
                         //-W2PA Changed to allow 35w - some amplifier tuners need about 30w to reliably start working
@@ -27281,12 +27245,17 @@ namespace Thetis
                             NetworkIO.SWRProtect = 0.01f;
                             chkMOX.Checked = false;
 
-                            MessageBox.Show("Please check your antenna connection.",
-                            "High SWR condition detected",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Warning,
-                            MessageBoxDefaultButton.Button1,
-                            Common.MB_TOPMOST);
+                            if (this.InvokeRequired)
+                            {
+                                this.Invoke(new MethodInvoker(() =>
+                                {
+                                    checkAntennaWarning();
+                                }));
+                            }
+                            else
+                            {
+                                checkAntennaWarning();
+                            }
 
                             goto end;
                         }
@@ -27407,6 +27376,15 @@ namespace Thetis
             calfwdpower = 0;
             alex_swr = 0;
             average_drivepwr = 0;
+        }
+        private void checkAntennaWarning()
+        {
+            MessageBox.Show("Please check your antenna connection.",
+            "High SWR condition detected",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Warning,
+            MessageBoxDefaultButton.Button1,
+            Common.MB_TOPMOST);
         }
 
         private float _swrProtectionLimit = 2.0f;
@@ -28872,7 +28850,7 @@ namespace Thetis
                 Thread.Sleep(100); // wait for hardware to settle before starting audio (possible sample rate change)
                 psform.ForcePS();
 
-                if (m_bAttontx)
+                if (m_bATTonTX)
                 {
                     int txatt = getTXstepAttenuatorForBand(_tx_band);
                     
@@ -30473,10 +30451,22 @@ namespace Thetis
             if (sliderForm != null)
                 sliderForm.RX1RFGainAGC = ptbRF.Value;
         }
-        public bool MicMute
+
+        private volatile bool _mic_muted = false;
+        public bool MicMute // NOTE: although called MicMute, true = mic in use
         {
             get { return chkMicMute.Checked; }
-            set { chkMicMute.Checked = value; }
+            set 
+            {
+                if (value != chkMicMute.Checked)
+                {
+                    chkMicMute.Checked = value;
+                }
+                else
+                {
+                    chkMicMute_CheckedChanged(this, EventArgs.Empty);
+                }
+            }
         }
         private void chkMicMute_CheckedChanged(object sender, System.EventArgs e)
         {
@@ -30554,6 +30544,7 @@ namespace Thetis
                 }
 
                 Audio.MicPreamp = Math.Pow(10.0, gain_db / 20.0); // convert to scalar 
+                _mic_muted = false;
             }
             else
             {
@@ -30565,6 +30556,7 @@ namespace Thetis
                 }
 
                 Audio.MicPreamp = 0.0;
+                _mic_muted = true;
             }
         }
         private void ptbCWSpeed_Scroll(object sender, System.EventArgs e)
@@ -30584,9 +30576,11 @@ namespace Thetis
 
         private void chkVOX_CheckedChanged(object sender, System.EventArgs e)
         {
-            if (!IsSetupFormNull) SetupForm.VOXEnable = chkVOX.Checked;
+            _vox_enable = chkVOX.Checked;
 
-            if (chkVOX.Checked)
+            if (!IsSetupFormNull) SetupForm.VOXEnable = _vox_enable;
+
+            if (_vox_enable)
             {
                 chkVOX.BackColor = button_selected_color;
             }
@@ -30993,12 +30987,12 @@ namespace Thetis
                     udTXStepAttData.Location = udRX1StepAttData.Location;
                     udTXStepAttData.Parent = udRX1StepAttData.Parent;
                     udTXStepAttData.BringToFront();
-                    udTXStepAttData.Visible = m_bAttontx;
-                    lblPreamp.Text = m_bAttontx ? "[S-ATT]" : (_rx1_step_att_enabled ? "S-ATT" : "ATT");
+                    udTXStepAttData.Visible = m_bATTonTX;
+                    lblPreamp.Text = m_bATTonTX ? "[S-ATT]" : (_rx1_step_att_enabled ? "S-ATT" : "ATT");
 
                     if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)
                     {
-                        lblPreamp.Text = m_bAttontx ? "[S-ATT]" : (AutoAttRX1 ? "A-ATT" : "S-ATT");
+                        lblPreamp.Text = m_bATTonTX ? "[S-ATT]" : (AutoAttRX1 ? "A-ATT" : "S-ATT");
                     }
                 }
                 else if (VFOBTX && rx2_enabled)
@@ -31015,8 +31009,8 @@ namespace Thetis
                         udTXStepAttData.Location = udRX1StepAttData.Location;
                         udTXStepAttData.Parent = udRX1StepAttData.Parent;
                         udTXStepAttData.BringToFront();
-                        udTXStepAttData.Visible = m_bAttontx;
-                        lblPreamp.Text = m_bAttontx ? "[S-ATT]" : (AutoAttRX1 ? "A-ATT" : "S-ATT");
+                        udTXStepAttData.Visible = m_bATTonTX;
+                        lblPreamp.Text = m_bATTonTX ? "[S-ATT]" : (AutoAttRX1 ? "A-ATT" : "S-ATT");
                     }
                     else
                     {
@@ -31024,8 +31018,8 @@ namespace Thetis
                         udTXStepAttData.Location = udRX2StepAttData.Location;
                         udTXStepAttData.Parent = udRX2StepAttData.Parent;
                         udTXStepAttData.BringToFront();
-                        udTXStepAttData.Visible = m_bAttontx;
-                        lblRX2Preamp.Text = m_bAttontx ? "[S-ATT]" : (_rx2_step_att_enabled ? "S-ATT" : "ATT");
+                        udTXStepAttData.Visible = m_bATTonTX;
+                        lblRX2Preamp.Text = m_bATTonTX ? "[S-ATT]" : (_rx2_step_att_enabled ? "S-ATT" : "ATT");
                     }
                 }
                 else
@@ -31309,7 +31303,7 @@ namespace Thetis
                     }
                 }
 
-                if (m_bAttontx)
+                if (m_bATTonTX)
                 {
                     if (HardwareSpecific.Model == HPSDRModel.HPSDR)
                     {
@@ -31414,8 +31408,8 @@ namespace Thetis
 
                 if (HardwareSpecific.Model == HPSDRModel.HERMESLITE)
                     AutoTuningHL2(ProtocolEvent.Idle);  // MI0BOT: Stop the auto tune
-
-                if (m_bAttontx)
+                    
+                if (m_bATTonTX)
                 {
                     if (HardwareSpecific.Model == HPSDRModel.HPSDR)
                     {
@@ -32055,22 +32049,12 @@ namespace Thetis
         {
             if (chkVFOLock.Checked == VFOALock) return;
             VFOALock = chkVFOLock.Checked;
-            //if (chkVFOLock.Checked == true)//[2.10.3.6]MW0LGE moved this to vfoalock property
-            //    lblLockLabel.BackColor = System.Drawing.Color.Blue;
-            //else
-            //    lblLockLabel.BackColor = System.Drawing.Color.Transparent;
-            //AndromedaIndicatorCheck(EIndicatorActions.eINVFOLock, true, chkVFOLock.Checked); 
         }
 
         private void chkVFOBLock_CheckedChanged(object sender, EventArgs e)
         {
             if (chkVFOBLock.Checked == VFOBLock) return;
             VFOBLock = chkVFOBLock.Checked;
-            //if (chkVFOBLock.Checked == true)//[2.10.3.6]MW0LGE moved this to vfoblock property
-            //    lblRX2LockLabel.BackColor = System.Drawing.Color.Blue;
-            //else
-            //    lblRX2LockLabel.BackColor = System.Drawing.Color.Transparent;
-            //AndromedaIndicatorCheck(EIndicatorActions.eINVFOLock, false, chkVFOBLock.Checked);
         }
         private void repopulateForms()
         {
@@ -32600,8 +32584,8 @@ namespace Thetis
                     SetupForm.RX2APFEnable = chkCWAPFEnabled.Checked;
                 else SetupForm.RX2APFEnable = SetupForm.RX2APFEnable;
 
-                if (chkCWAPFEnabled.Checked) cat_apf_status = 1; //-W2PA Added to enable extended CAT control
-                else cat_apf_status = 0;
+                if (chkCWAPFEnabled.Checked) _cat_apf_status = 1; //-W2PA Added to enable extended CAT control
+                else _cat_apf_status = 0;
             }
         }
 
@@ -41747,7 +41731,8 @@ namespace Thetis
                     chkX2TR.Checked = chkFWCATU.Checked;
                 }
 
-                txtVFOAFreq_LostFocus(this, EventArgs.Empty);
+                //txtVFOAFreq_LostFocus(this, EventArgs.Empty);
+                handleVfoSyncInitial();
             }
             else
             {
@@ -48223,7 +48208,7 @@ namespace Thetis
             //max bin display
             if (_display_max_bin_enabled[rx-1] && rx == 1) setupDisplayMaxBinDetect(rx, false, true);
 
-            handleVfoSyncFrequency(rx, newFreq, false);
+            handleVfoSyncFrequency(rx, false);
         }
         private void OnVFOBFrequencyChangeHandler(Band oldBand, Band newBand, DSPMode oldMode, DSPMode newMode, Filter oldFilter, Filter newFilter, double oldFreq, double newFreq, double oldCentreF, double newCentreF, bool oldCTUN, bool newCTUN, int oldZoomSlider, int newZoomSlider, double offset, int rx)
         {
@@ -48240,7 +48225,7 @@ namespace Thetis
             //max bin display
             if (_display_max_bin_enabled[rx - 1] && rx == 2) setupDisplayMaxBinDetect(rx, false, true);
 
-            handleVfoSyncFrequency(rx, newFreq, true);
+            handleVfoSyncFrequency(rx, true);
         }
 
         private void OnMoxChangeHandler(int rx, bool oldMox, bool newMox)
@@ -55348,7 +55333,7 @@ namespace Thetis
             switch (id)
             {
                 case OtherButtonId.MIC:
-                    MicMute = state;
+                    MicMute = state; // NOTE: although called MicMute, true = mic in use
                     return true;
                 case OtherButtonId.COMP:
                     CPDR = state;
@@ -55887,6 +55872,7 @@ namespace Thetis
         private bool _vfo_sync_frequency = false;
         private bool _vfo_sync_mode = false;
         private bool _vfo_sync_filter = false;
+        private VFOSYNCinit _vfo_sync_initial_action = VFOSYNCinit.Nothing; 
         public bool VFOsyncFrequency
         {
             get { return _vfo_sync_frequency; }
@@ -55902,8 +55888,52 @@ namespace Thetis
             get { return _vfo_sync_filter; }
             set { _vfo_sync_filter = value; }
         }
+        public VFOSYNCinit VFOinitialAction
+        {
+            get { return _vfo_sync_initial_action; }
+            set { _vfo_sync_initial_action = value; }
+        }
+        private void handleVfoSyncInitial()
+        {
+            if (!VFOSync || _prevent_vsync_updates) return;
+            _prevent_vsync_updates = true;
+            switch (_vfo_sync_initial_action)
+            {
+                case VFOSYNCinit.Nothing:
+                    break;
+                case VFOSYNCinit.VFO_A_to_B:
+                    if(RX2Enabled)
+                    {
+                        if (_vfo_sync_frequency) VFOBFreq = VFOAFreq;
+                        if (_vfo_sync_mode) RX2DSPMode = RX1DSPMode;
+                        if (_vfo_sync_filter) RX2Filter = RX1Filter;
+                    }
+                    else
+                    {
+                        if (_vfo_sync_frequency) VFOBFreq = VFOAFreq;
+                        // set these, even if rx2 not in use, so if rx2 is enabled, it will already match
+                        if (_vfo_sync_mode) RX2DSPMode = RX1DSPMode;
+                        if (_vfo_sync_filter) RX2Filter = RX1Filter;
+                    }
+                    break;
+                case VFOSYNCinit.VFO_B_to_A:
+                    if (RX2Enabled)
+                    {
+                        if (_vfo_sync_frequency) VFOAFreq = VFOBFreq;
+                        if (_vfo_sync_mode) RX1DSPMode = RX2DSPMode;
+                        if (_vfo_sync_filter) RX1Filter = RX2Filter;
+                    }
+                    else
+                    {
+                        if (_vfo_sync_frequency) VFOAFreq = VFOBFreq;
+                        // mode/filter not required as there is only a single mode/filter used for rx1
+                    }
+                    break;
+            }
+            _prevent_vsync_updates = false;
+        }
         private bool _prevent_vsync_updates = false; // to prevent recursive updates
-        private void handleVfoSyncFrequency(int rx, double frequency, bool vfoB)
+        private void handleVfoSyncFrequency(int rx, bool b_to_a)
         {
             if (!VFOSync) return;
             if (!_vfo_sync_frequency || _prevent_vsync_updates) return;
@@ -55912,7 +55942,7 @@ namespace Thetis
             switch (rx)
             {
                 case 1:
-                    if (vfoB)
+                    if (b_to_a)
                     {
                         VFOAFreq = VFOBFreq;
                     }
@@ -55925,7 +55955,7 @@ namespace Thetis
                     handleVfoSyncMode(1, RX1DSPMode);
                     break;
                 case 2:
-                    if (vfoB)
+                    if (b_to_a)
                     {
                         VFOAFreq = VFOBFreq; //vfob will always be changing for rx2
                         _prevent_vsync_updates = false;
@@ -55989,6 +56019,17 @@ namespace Thetis
             }
 
             _prevent_vsync_updates = false;
+        }
+        private void btnAPF_type_Click(object sender, EventArgs e)
+        {
+            if (IsSetupFormNull) return;
+
+            SetupForm.CycleAPFType();
+        }
+
+        private void btnAPF_type_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (IsRightButton(e)) SetupForm.ShowSetupTab(Setup.SetupTab.DSPAudio_Tab);
         }
     }
 
