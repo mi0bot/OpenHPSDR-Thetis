@@ -16467,17 +16467,17 @@ namespace Thetis
                     int nRX1ADCinUse = console.GetADCInUse(rx1);
                     int nRX2ADCinUse = console.GetADCInUse(rx2);
 
-                if (HardwareSpecific.HasSteppedAttenuation(2)) // dont bother setting 1 if 2 not present
-                {
-                    if (nRX1ADCinUse == nRX2ADCinUse && chkHermesStepAttenuator.Checked != chkRX2StepAtt.Checked)
+                    if (HardwareSpecific.HasSteppedAttenuation(2)) // dont bother setting 1 if 2 not present
                     {
-                        chkHermesStepAttenuator.Checked = chkRX2StepAtt.Checked;
+                        if (nRX1ADCinUse == nRX2ADCinUse && chkHermesStepAttenuator.Checked != chkRX2StepAtt.Checked)
+                        {
+                            chkHermesStepAttenuator.Checked = chkRX2StepAtt.Checked;
+                        }
+                        else
+                        {
+                            chkHermesStepAttenuator_CheckedChanged(this, EventArgs.Empty);
+                        }
                     }
-                    else
-                    {
-                        chkHermesStepAttenuator_CheckedChanged(this, EventArgs.Empty);
-                    }
-                }
                 }
             }
         }
