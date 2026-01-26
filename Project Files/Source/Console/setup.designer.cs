@@ -1965,6 +1965,15 @@
             this.labelTS54 = new System.Windows.Forms.LabelTS();
             this.labelTS53 = new System.Windows.Forms.LabelTS();
             this.tpCMAsio = new System.Windows.Forms.TabPage();
+            this.pbCMasio_InOut_Info = new System.Windows.Forms.PictureBox();
+            this.labelTS645 = new System.Windows.Forms.LabelTS();
+            this.radCMASIO_mic_BOTH = new System.Windows.Forms.RadioButtonTS();
+            this.radCMASIO_mic_R = new System.Windows.Forms.RadioButtonTS();
+            this.radCMASIO_mic_L = new System.Windows.Forms.RadioButtonTS();
+            this.labelTS136 = new System.Windows.Forms.LabelTS();
+            this.comboCMASIO_outpair = new System.Windows.Forms.ComboBoxTS();
+            this.labelTS135 = new System.Windows.Forms.LabelTS();
+            this.comboCMASIO_inpair = new System.Windows.Forms.ComboBoxTS();
             this.lblCMAsioInfo = new System.Windows.Forms.LabelTS();
             this.labelTS286 = new System.Windows.Forms.LabelTS();
             this.labelTS295 = new System.Windows.Forms.LabelTS();
@@ -4773,6 +4782,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.udVAC1SlewTimeIn)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udVAC1FeedbackGainIn)).BeginInit();
             this.tpCMAsio.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbCMasio_InOut_Info)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudAsioBlockNum)).BeginInit();
             this.tpDisplay.SuspendLayout();
             this.tcDisplay.SuspendLayout();
@@ -32859,6 +32869,15 @@
             // tpCMAsio
             // 
             this.tpCMAsio.BackColor = System.Drawing.SystemColors.Control;
+            this.tpCMAsio.Controls.Add(this.pbCMasio_InOut_Info);
+            this.tpCMAsio.Controls.Add(this.labelTS645);
+            this.tpCMAsio.Controls.Add(this.radCMASIO_mic_BOTH);
+            this.tpCMAsio.Controls.Add(this.radCMASIO_mic_R);
+            this.tpCMAsio.Controls.Add(this.radCMASIO_mic_L);
+            this.tpCMAsio.Controls.Add(this.labelTS136);
+            this.tpCMAsio.Controls.Add(this.comboCMASIO_outpair);
+            this.tpCMAsio.Controls.Add(this.labelTS135);
+            this.tpCMAsio.Controls.Add(this.comboCMASIO_inpair);
             this.tpCMAsio.Controls.Add(this.lblCMAsioInfo);
             this.tpCMAsio.Controls.Add(this.labelTS286);
             this.tpCMAsio.Controls.Add(this.labelTS295);
@@ -32878,6 +32897,107 @@
             this.tpCMAsio.Size = new System.Drawing.Size(712, 404);
             this.tpCMAsio.TabIndex = 5;
             this.tpCMAsio.Text = "cmASIO";
+            // 
+            // pbCMasio_InOut_Info
+            // 
+            this.pbCMasio_InOut_Info.Image = ((System.Drawing.Image)(resources.GetObject("pbCMasio_InOut_Info.Image")));
+            this.pbCMasio_InOut_Info.Location = new System.Drawing.Point(92, 52);
+            this.pbCMasio_InOut_Info.Name = "pbCMasio_InOut_Info";
+            this.pbCMasio_InOut_Info.Size = new System.Drawing.Size(20, 20);
+            this.pbCMasio_InOut_Info.TabIndex = 123;
+            this.pbCMasio_InOut_Info.TabStop = false;
+            this.toolTip1.SetToolTip(this.pbCMasio_InOut_Info, "Click for info");
+            this.pbCMasio_InOut_Info.Click += new System.EventHandler(this.pbCMasio_InOut_Info_Click);
+            // 
+            // labelTS645
+            // 
+            this.labelTS645.AutoSize = true;
+            this.labelTS645.Image = null;
+            this.labelTS645.Location = new System.Drawing.Point(95, 81);
+            this.labelTS645.Name = "labelTS645";
+            this.labelTS645.Size = new System.Drawing.Size(67, 13);
+            this.labelTS645.TabIndex = 122;
+            this.labelTS645.Text = "MIC source :";
+            // 
+            // radCMASIO_mic_BOTH
+            // 
+            this.radCMASIO_mic_BOTH.AutoSize = true;
+            this.radCMASIO_mic_BOTH.Checked = true;
+            this.radCMASIO_mic_BOTH.Image = null;
+            this.radCMASIO_mic_BOTH.Location = new System.Drawing.Point(351, 79);
+            this.radCMASIO_mic_BOTH.Name = "radCMASIO_mic_BOTH";
+            this.radCMASIO_mic_BOTH.Size = new System.Drawing.Size(86, 17);
+            this.radCMASIO_mic_BOTH.TabIndex = 121;
+            this.radCMASIO_mic_BOTH.TabStop = true;
+            this.radCMASIO_mic_BOTH.Text = "Both (ch1+2)";
+            this.radCMASIO_mic_BOTH.UseVisualStyleBackColor = true;
+            this.radCMASIO_mic_BOTH.CheckedChanged += new System.EventHandler(this.radCMASIO_mic_CheckedChanged);
+            // 
+            // radCMASIO_mic_R
+            // 
+            this.radCMASIO_mic_R.AutoSize = true;
+            this.radCMASIO_mic_R.Image = null;
+            this.radCMASIO_mic_R.Location = new System.Drawing.Point(253, 79);
+            this.radCMASIO_mic_R.Name = "radCMASIO_mic_R";
+            this.radCMASIO_mic_R.Size = new System.Drawing.Size(77, 17);
+            this.radCMASIO_mic_R.TabIndex = 120;
+            this.radCMASIO_mic_R.Text = "Right (ch2)";
+            this.radCMASIO_mic_R.UseVisualStyleBackColor = true;
+            this.radCMASIO_mic_R.CheckedChanged += new System.EventHandler(this.radCMASIO_mic_CheckedChanged);
+            // 
+            // radCMASIO_mic_L
+            // 
+            this.radCMASIO_mic_L.AutoSize = true;
+            this.radCMASIO_mic_L.Image = null;
+            this.radCMASIO_mic_L.Location = new System.Drawing.Point(168, 79);
+            this.radCMASIO_mic_L.Name = "radCMASIO_mic_L";
+            this.radCMASIO_mic_L.Size = new System.Drawing.Size(70, 17);
+            this.radCMASIO_mic_L.TabIndex = 119;
+            this.radCMASIO_mic_L.Text = "Left (ch1)";
+            this.radCMASIO_mic_L.UseVisualStyleBackColor = true;
+            this.radCMASIO_mic_L.CheckedChanged += new System.EventHandler(this.radCMASIO_mic_CheckedChanged);
+            // 
+            // labelTS136
+            // 
+            this.labelTS136.AutoSize = true;
+            this.labelTS136.Image = null;
+            this.labelTS136.Location = new System.Drawing.Point(269, 55);
+            this.labelTS136.Name = "labelTS136";
+            this.labelTS136.Size = new System.Drawing.Size(56, 13);
+            this.labelTS136.TabIndex = 118;
+            this.labelTS136.Text = "OUT pair :";
+            // 
+            // comboCMASIO_outpair
+            // 
+            this.comboCMASIO_outpair.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboCMASIO_outpair.FormattingEnabled = true;
+            this.comboCMASIO_outpair.Location = new System.Drawing.Point(331, 52);
+            this.comboCMASIO_outpair.Name = "comboCMASIO_outpair";
+            this.comboCMASIO_outpair.Size = new System.Drawing.Size(86, 21);
+            this.comboCMASIO_outpair.TabIndex = 117;
+            this.toolTip1.SetToolTip(this.comboCMASIO_outpair, "The output channel pair to use");
+            this.comboCMASIO_outpair.SelectedIndexChanged += new System.EventHandler(this.comboCMASIO_outpair_SelectedIndexChanged);
+            // 
+            // labelTS135
+            // 
+            this.labelTS135.AutoSize = true;
+            this.labelTS135.Image = null;
+            this.labelTS135.Location = new System.Drawing.Point(118, 55);
+            this.labelTS135.Name = "labelTS135";
+            this.labelTS135.Size = new System.Drawing.Size(44, 13);
+            this.labelTS135.TabIndex = 116;
+            this.labelTS135.Text = "IN pair :";
+            // 
+            // comboCMASIO_inpair
+            // 
+            this.comboCMASIO_inpair.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboCMASIO_inpair.FormattingEnabled = true;
+            this.comboCMASIO_inpair.Location = new System.Drawing.Point(168, 52);
+            this.comboCMASIO_inpair.Name = "comboCMASIO_inpair";
+            this.comboCMASIO_inpair.Size = new System.Drawing.Size(86, 21);
+            this.comboCMASIO_inpair.TabIndex = 115;
+            this.toolTip1.SetToolTip(this.comboCMASIO_inpair, "The input channel pair to use");
+            this.comboCMASIO_inpair.SelectedIndexChanged += new System.EventHandler(this.comboCMASIO_inpair_SelectedIndexChanged);
             // 
             // lblCMAsioInfo
             // 
@@ -32918,7 +33038,7 @@
             // 
             this.chkAsioLockMode.AutoSize = true;
             this.chkAsioLockMode.Image = null;
-            this.chkAsioLockMode.Location = new System.Drawing.Point(327, 106);
+            this.chkAsioLockMode.Location = new System.Drawing.Point(327, 139);
             this.chkAsioLockMode.Name = "chkAsioLockMode";
             this.chkAsioLockMode.Size = new System.Drawing.Size(80, 17);
             this.chkAsioLockMode.TabIndex = 111;
@@ -32931,7 +33051,7 @@
             // btnCMAsioDefaultBlockNum
             // 
             this.btnCMAsioDefaultBlockNum.Image = null;
-            this.btnCMAsioDefaultBlockNum.Location = new System.Drawing.Point(230, 102);
+            this.btnCMAsioDefaultBlockNum.Location = new System.Drawing.Point(230, 135);
             this.btnCMAsioDefaultBlockNum.Name = "btnCMAsioDefaultBlockNum";
             this.btnCMAsioDefaultBlockNum.Selectable = true;
             this.btnCMAsioDefaultBlockNum.Size = new System.Drawing.Size(58, 23);
@@ -32948,7 +33068,7 @@
             0,
             0,
             0});
-            this.nudAsioBlockNum.Location = new System.Drawing.Point(168, 105);
+            this.nudAsioBlockNum.Location = new System.Drawing.Point(168, 138);
             this.nudAsioBlockNum.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -32976,7 +33096,7 @@
             // 
             this.labelTS285.AutoSize = true;
             this.labelTS285.Image = null;
-            this.labelTS285.Location = new System.Drawing.Point(97, 107);
+            this.labelTS285.Location = new System.Drawing.Point(97, 140);
             this.labelTS285.Name = "labelTS285";
             this.labelTS285.Size = new System.Drawing.Size(65, 13);
             this.labelTS285.TabIndex = 101;
@@ -32997,7 +33117,8 @@
             // 
             // txtCurrentAsioDevice
             // 
-            this.txtCurrentAsioDevice.Location = new System.Drawing.Point(168, 69);
+            this.txtCurrentAsioDevice.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCurrentAsioDevice.Location = new System.Drawing.Point(168, 109);
             this.txtCurrentAsioDevice.Name = "txtCurrentAsioDevice";
             this.txtCurrentAsioDevice.ReadOnly = true;
             this.txtCurrentAsioDevice.Size = new System.Drawing.Size(249, 20);
@@ -33007,7 +33128,7 @@
             // 
             this.labelTS284.AutoSize = true;
             this.labelTS284.Image = null;
-            this.labelTS284.Location = new System.Drawing.Point(37, 72);
+            this.labelTS284.Location = new System.Drawing.Point(37, 112);
             this.labelTS284.Name = "labelTS284";
             this.labelTS284.Size = new System.Drawing.Size(126, 13);
             this.labelTS284.TabIndex = 98;
@@ -33051,7 +33172,7 @@
             this.labelTS282.AutoSize = true;
             this.labelTS282.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.labelTS282.Image = null;
-            this.labelTS282.Location = new System.Drawing.Point(95, 154);
+            this.labelTS282.Location = new System.Drawing.Point(95, 169);
             this.labelTS282.Name = "labelTS282";
             this.labelTS282.Size = new System.Drawing.Size(544, 16);
             this.labelTS282.TabIndex = 94;
@@ -51720,10 +51841,11 @@
             this.chkConsoleDarkModeTitleBar.Image = null;
             this.chkConsoleDarkModeTitleBar.Location = new System.Drawing.Point(6, 42);
             this.chkConsoleDarkModeTitleBar.Name = "chkConsoleDarkModeTitleBar";
-            this.chkConsoleDarkModeTitleBar.Size = new System.Drawing.Size(156, 17);
+            this.chkConsoleDarkModeTitleBar.Size = new System.Drawing.Size(201, 17);
             this.chkConsoleDarkModeTitleBar.TabIndex = 92;
-            this.chkConsoleDarkModeTitleBar.Text = "Dark mode Console title bar";
-            this.toolTip1.SetToolTip(this.chkConsoleDarkModeTitleBar, "Dark mode Console title bar (only on Windows 10 and later)");
+            this.chkConsoleDarkModeTitleBar.Text = "Dark mode title bars + some windows";
+            this.toolTip1.SetToolTip(this.chkConsoleDarkModeTitleBar, "Dark mode title bars (only on Windows 10 and later)\r\nSome window contents may als" +
+        "o become dark (diversity for example)");
             this.chkConsoleDarkModeTitleBar.UseVisualStyleBackColor = true;
             this.chkConsoleDarkModeTitleBar.Visible = false;
             this.chkConsoleDarkModeTitleBar.CheckedChanged += new System.EventHandler(this.chkConsoleDarkModeTitleBar_CheckedChanged);
@@ -70514,6 +70636,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.udVAC1FeedbackGainIn)).EndInit();
             this.tpCMAsio.ResumeLayout(false);
             this.tpCMAsio.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbCMasio_InOut_Info)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudAsioBlockNum)).EndInit();
             this.tpDisplay.ResumeLayout(false);
             this.tcDisplay.ResumeLayout(false);
@@ -75796,5 +75919,14 @@
         private CheckBoxTS chkIgnoreATTOffset;
         private ButtonTS btnShowBandwidth;
         private CheckBoxTS chkNR3_RNNoiseFixedGain;
+        private LabelTS labelTS136;
+        private ComboBoxTS comboCMASIO_outpair;
+        private LabelTS labelTS135;
+        private ComboBoxTS comboCMASIO_inpair;
+        private LabelTS labelTS645;
+        private RadioButtonTS radCMASIO_mic_BOTH;
+        private RadioButtonTS radCMASIO_mic_R;
+        private RadioButtonTS radCMASIO_mic_L;
+        private PictureBox pbCMasio_InOut_Info;
     }
 }

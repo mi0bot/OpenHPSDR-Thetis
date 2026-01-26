@@ -222,7 +222,7 @@ namespace Thetis
         private int rx2_meter_peak_value;					// Value for peak hold on multimeter
         public int pa_fwd_power;							// forward power as read by the ADC on the PA
         public int pa_rev_power;							// reverse power as read by the ADC on the PA
-        private bool tuning;								// true when the TUN button is active
+        private bool _tuning;								// true when the TUN button is active
         public float[][] rx1_level_table;					// table used to store RX1 Level cal settings
         public float[][] rx2_level_table;					// table used to store RX2 Level cal settings
 
@@ -1037,13 +1037,16 @@ namespace Thetis
                 if (!IsSetupFormNull) SetupForm.Location = new Point(160, 160);
             }
 
+            //starting diversity
+            if (_startdiversity) showHideDiversity(true, true);
+
             //release notes
             _frmReleaseNotes = new frmReleaseNotes();
-            _frmReleaseNotes.InitPath(Application.StartupPath);
-            if (bShowReleaseNotes) ShowReleaseNotes();
-            //
+            _frmReleaseNotes.InitPath(Application.StartupPath);            
 
             LogTool.Completed("FIN");
+
+            if (bShowReleaseNotes) ShowReleaseNotes();
 
             //now set the prio class as we have been running flat out up to this point
             //this used to be called in SetupForm ForceAllEvents, but moved here now
@@ -1205,8 +1208,8 @@ namespace Thetis
                 if (new_szie != _error_log_initial_size)
                 {
                     //log file has changed
-                    MessageBox.Show("The ErrorLog.txt has been updated during this session.\n\n" +
-                    "Please email it to MI0BOT at : [mi0bot@trom.uk].\n\n" +
+                    MessageBox.Show("The ErrorLog.txt has been updated during this sesson.\n\n" +
+                    "Please email it to MW0LGE at : [mw0lge@grange-lane.co.uk].\n\n" +
                     "It is located in this folder : [" + AppDataPath + "].",
                     "Error Log Change",
                     MessageBoxButtons.OK,
@@ -1344,36 +1347,6 @@ namespace Thetis
             if (Common.HasArg(args, "-help"))
             {
                 if (showHelpInfo()) return;  // if we can show, instantly exit
-            }
-
-            string buildName = TitleBar.BUILD_NAME;
-            var parts = VersionInfo.BuildDate.Split('/');
-            int month = Convert.ToInt32(parts[0]);
-            int day = Convert.ToInt32(parts[1]);
-            int year = Convert.ToInt32(parts[2]) + 2000;
-
-            DateTime oldDate = new DateTime(year, month, day);
-            DateTime currentDate = DateTime.Today;
-
-            int daysElapsed = (currentDate - oldDate).Days;
-
-            if (100 < daysElapsed &&
-                buildName.Contains("eta") &&
-                !(Keyboard.IsKeyDown(Keys.Alt)))
-            {
-                // Exceeded beta trail period
-
-                if (MessageBox.Show("Sorry, but this beta's time limit has expired. " + "Download the latest version?",
-                    "Beta Timeout",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Asterisk) == DialogResult.Yes)
-                {
-                    System.Diagnostics.Process.Start("https://github.com/mi0bot/OpenHPSDR-Thetis/releases/");
-                }
-
-                // Shut down the current process
-                Application.Exit();
-                return;
             }
 
             //[2.10.3.12]MW0LGE command line adaptor select
@@ -2154,8 +2127,9 @@ namespace Thetis
             //MW0LGE duped from above Display.Target = pnlDisplay;
             update_rx2_display = true;
 
-            if (_startdiversity)
-                eSCToolStripMenuItem_Click(this, EventArgs.Empty);
+            //[2.10.3.13]MW0LGE moved to after the console window is showing
+            //if (_startdiversity)
+            //    eSCToolStripMenuItem_Click(this, EventArgs.Empty);
 
             // uncomment for multiple displays
             //cmaster.Getrxa(4).pDisplay.StartDisplay(4);
@@ -5818,7 +5792,7 @@ namespace Thetis
 
             if (disable_split_on_bandchange)
             {
-                if (RX1Band != b && !tuning)
+                if (RX1Band != b && !_tuning)
                 {
                     if (chkVFOSplit.Checked)
                         chkVFOSplit.Checked = false;
@@ -5865,7 +5839,7 @@ namespace Thetis
 
             if (disable_split_on_bandchange && !bIngoreBandChange) //[2.10.3.6]MW0LGE might need to ignore this is we are using extended and band is moved to a hamband
             {
-                if (TXBand != b && !tuning)
+                if (TXBand != b && !_tuning)
                 {
                     if (chkVFOSplit.Checked)
                         chkVFOSplit.Checked = false;
@@ -9659,7 +9633,7 @@ namespace Thetis
                     {
                         Audio.SourceScale = 1.0;
                         Audio.TXInputSignal = Audio.SignalSource.SINE;
-                        tuning = true;
+                        _tuning = true;
                         chkMOX.Checked = true;
 
                         for (int j = 0; j < on_time / 100; j++)
@@ -9674,7 +9648,7 @@ namespace Thetis
                         watts = alex_fwd;
 
                         chkMOX.Checked = false;
-                        tuning = false;
+                        _tuning = false;
 
                         Audio.TXInputSignal = Audio.SignalSource.RADIO;
 
@@ -9729,7 +9703,7 @@ namespace Thetis
             chkCPDR.Checked = cpdr;
 
             chkMOX.Checked = false;
-            tuning = false;
+            _tuning = false;
 
             Audio.TXInputSignal = Audio.SignalSource.RADIO;
             Audio.TXOutputSignal = Audio.SignalSource.RADIO;
@@ -11044,26 +11018,29 @@ namespace Thetis
             }
             set
             {
-                if (value)
-                {
-                    if (HardwareSpecific.Model != HPSDRModel.ANAN100D &&
-                        HardwareSpecific.Model != HPSDRModel.ANAN200D &&
-                        HardwareSpecific.Model != HPSDRModel.ORIONMKII &&
-                        HardwareSpecific.Model != HPSDRModel.ANAN7000D &&
-                        HardwareSpecific.Model != HPSDRModel.ANAN8000D &&
-                        HardwareSpecific.Model != HPSDRModel.ANAN_G2 &&
-                        HardwareSpecific.Model != HPSDRModel.ANAN_G2_1K &&
-                        HardwareSpecific.Model != HPSDRModel.ANVELINAPRO3 &&
-                        HardwareSpecific.Model != HPSDRModel.REDPITAYA) return; //DH1KLM
+                //if (value)
+                //{
+                //    if (HardwareSpecific.Model != HPSDRModel.ANAN100D &&
+                //        HardwareSpecific.Model != HPSDRModel.ANAN200D &&
+                //        HardwareSpecific.Model != HPSDRModel.ORIONMKII &&
+                //        HardwareSpecific.Model != HPSDRModel.ANAN7000D &&
+                //        HardwareSpecific.Model != HPSDRModel.ANAN8000D &&
+                //        HardwareSpecific.Model != HPSDRModel.ANAN_G2 &&
+                //        HardwareSpecific.Model != HPSDRModel.ANAN_G2_1K &&
+                //        HardwareSpecific.Model != HPSDRModel.ANVELINAPRO3 &&
+                //        HardwareSpecific.Model != HPSDRModel.REDPITAYA) return; //DH1KLM
 
-                    if (diversityForm == null || diversityForm.IsDisposed)
-                        diversityForm = new DiversityForm(this);
-                    diversityForm.Focus();
-                    this.Invoke(new MethodInvoker(diversityForm.Show));
-                }
-                else
-                    if (diversityForm != null)
-                    this.Invoke(new MethodInvoker(diversityForm.Close));
+                //    if (diversityForm == null || diversityForm.IsDisposed)
+                //        diversityForm = new DiversityForm(this);
+                //    diversityForm.Focus();
+                //    this.Invoke(new MethodInvoker(diversityForm.Show));
+                //}
+                //else
+                //    if (diversityForm != null)
+                //    this.Invoke(new MethodInvoker(diversityForm.Close));
+
+                //[2.10.3.13]MW0LGE modified to use existing function to ensure all is setup correctly
+                showHideDiversity(value);
             }
         }
 
@@ -14184,7 +14161,7 @@ namespace Thetis
                 {
                     Band lo_band = BandByFreq(XVTRForm.TranslateFreq(VFOAFreq), rx1_xvtr_index, current_region);
                     Band lo_bandb = BandByFreq(XVTRForm.TranslateFreq(VFOBFreq), rx2_xvtr_index, current_region);
-                    int bits = Penny.getPenny().ExtCtrlEnable(lo_band, lo_bandb, _mox, value, tuning, SetupForm.TestIMD, chkExternalPA.Checked); // MW0LGE_21j
+                    int bits = Penny.getPenny().ExtCtrlEnable(lo_band, lo_bandb, _mox, value, _tuning, SetupForm.TestIMD, chkExternalPA.Checked); // MW0LGE_21j
                     if (!IsSetupFormNull) SetupForm.UpdateOCLedStrip(_mox, bits);
                 }
             }
@@ -14627,7 +14604,7 @@ namespace Thetis
         private void UpdateRX1DDSFreq()
         {
             if (initializing) return;
-            setAlex1HPF(fwc_dds_freq);
+            setAlex1HPF(_rx1_dds_freq);
             UpdateAlexTXFilter();
             UpdateAlexRXFilter();
 
@@ -14691,7 +14668,7 @@ namespace Thetis
             if (initializing) return;
             setAlexLPF(tx_dds_freq_mhz, true);
             if (_mox)
-                setAlex1HPF(fwc_dds_freq);
+                setAlex1HPF(_rx1_dds_freq);
             NetworkIO.VFOfreq(0, tx_dds_freq_mhz, 1);
         }
 
@@ -14720,41 +14697,31 @@ namespace Thetis
             }
         }
 
-        private double fwc_dds_freq = 14;
-        public double FWCDDSFreq
+        private double _rx1_dds_freq = 14;
+        public double RX1DDSFreq
         {
-            get { return fwc_dds_freq; }
+            get { return _rx1_dds_freq; }
             set
             {
-                fwc_dds_freq = value;
+                _rx1_dds_freq = value;
 
-                double f = fwc_dds_freq + vfo_offset;
+                double f = _rx1_dds_freq + _rx1_vfo_offset;
                 rx1_dds_freq_mhz = f;
                 UpdateRX1DDSFreq();
             }
         }
 
-        private double rx2_dds_freq = 14;
+        private double _rx2_dds_freq = 14;
         public double RX2DDSFreq
         {
-            get { return rx2_dds_freq; }
+            get { return _rx2_dds_freq; }
             set
             {
-                rx2_dds_freq = value;
+                _rx2_dds_freq = value;
 
-                double f = rx2_dds_freq + rx2_vfo_offset;
+                double f = _rx2_dds_freq + rx2_vfo_offset;
                 rx2_dds_freq_mhz = f;
                 UpdateRX2DDSFreq();
-            }
-        }
-
-        private double dds_freq = 14;
-        public double DDSFreq
-        {
-            get { return dds_freq; }
-            set
-            {
-                dds_freq = value;
             }
         }
 
@@ -14795,11 +14762,11 @@ namespace Thetis
             }
         }
 
-        private double vfo_offset = 0.0;
-        public double VFOOffset
+        private double _rx1_vfo_offset = 0.0;
+        public double RX1VFOOffset
         {
-            get { return vfo_offset; }
-            set { vfo_offset = value; }
+            get { return _rx1_vfo_offset; }
+            set { _rx1_vfo_offset = value; }
         }
 
         private double rx2_vfo_offset = 0.0;
@@ -18381,7 +18348,7 @@ namespace Thetis
                     if (comboMeterTXMode.SelectedIndex < 0)
                         comboMeterTXMode.SelectedIndex = 0;
 
-                    setAlex1HPF(fwc_dds_freq);
+                    setAlex1HPF(_rx1_dds_freq);
                     setAlexLPF(tx_dds_freq_mhz, true);
                     setAlex2HPF(rx2_dds_freq_mhz);
                 }
@@ -24171,7 +24138,7 @@ namespace Thetis
             _MKIIPAVolts = 0f;
             _MKIIPAAmps  = 0f;
             _MKIIHL2Temp = 0f;      // MI0BOT: HL2 temperature
-
+            
             //there is no clear for ConcurrentQueues, we need to dequeue to clear
             int tries;
             tries = _voltsQueue.Count;
@@ -26879,8 +26846,8 @@ namespace Thetis
                     chkRX2_CheckedChanged(this, EventArgs.Empty);
                 }
 
-                fwc_dds_freq = 0.0f;
-                rx2_dds_freq = 0.0f;
+                _rx1_dds_freq = 0.0f;
+                _rx2_dds_freq = 0.0f;
 
                 txtVFOAFreq_LostFocus(this, EventArgs.Empty);
                 comboDisplayMode_SelectedIndexChanged(this, EventArgs.Empty);
@@ -28831,7 +28798,7 @@ namespace Thetis
 
                 if (penny_ext_ctrl_enabled) //MW0LGE_21k
                 {
-                    int bits = Penny.getPenny().UpdateExtCtrl(lo_band, lo_bandb, _mox, tuning, SetupForm.TestIMD, chkExternalPA.Checked); //MW0LGE_21j
+                    int bits = Penny.getPenny().UpdateExtCtrl(lo_band, lo_bandb, _mox, _tuning, SetupForm.TestIMD, chkExternalPA.Checked); //MW0LGE_21j
                     if (!IsSetupFormNull) SetupForm.UpdateOCLedStrip(_mox, bits);
                 }
 
@@ -28882,7 +28849,7 @@ namespace Thetis
 
                 if (penny_ext_ctrl_enabled) //MW0LGE_21k
                 {
-                    int bits = Penny.getPenny().UpdateExtCtrl(lo_band, lo_bandb, _mox, tuning, SetupForm.TestIMD, chkExternalPA.Checked); //MW0LGE_21j
+                    int bits = Penny.getPenny().UpdateExtCtrl(lo_band, lo_bandb, _mox, _tuning, SetupForm.TestIMD, chkExternalPA.Checked); //MW0LGE_21j
                     if (!IsSetupFormNull) SetupForm.UpdateOCLedStrip(_mox, bits);
                 }
 
@@ -29782,7 +29749,7 @@ namespace Thetis
         }
         private async void chkTUN_CheckedChanged(object sender, System.EventArgs e)
         {
-            bool oldTune = tuning; //MW0LGE_21k9d
+            bool oldTune = _tuning; //MW0LGE_21k9d
 
             if (chkTUN.Checked)
             {
@@ -29815,7 +29782,7 @@ namespace Thetis
                     return;
                 }
 
-                tuning = true;                                                  // used for a few things
+                _tuning = true;                                                  // used for a few things
                 chkTUN.BackColor = button_selected_color;
 
                 old_meter_tx_mode_before_tune = current_meter_tx_mode;
@@ -29945,7 +29912,7 @@ namespace Thetis
                         CWFWKeyer = true;
                         break;
                 }
-                tuning = false;
+                _tuning = false;
 
                 updateVFOFreqs(chkTUN.Checked, true);
 
@@ -29982,7 +29949,7 @@ namespace Thetis
 
             setupTuneDriveSlider(); // MW0LGE_22b
 
-            if (oldTune != tuning) TuneChangedHandlers?.Invoke(RX2Enabled && VFOBTX ? 2 : 1, oldTune, tuning);
+            if (oldTune != _tuning) TuneChangedHandlers?.Invoke(RX2Enabled && VFOBTX ? 2 : 1, oldTune, _tuning);
         }
         public void SetupTunePulse()
         {
@@ -31452,7 +31419,7 @@ namespace Thetis
 
                 if (penny_ext_ctrl_enabled) //MW0LGE_21k
                 {
-                    int bits = Penny.getPenny().UpdateExtCtrl(lo_band, lo_bandb, _mox, tuning, SetupForm.TestIMD, chkExternalPA.Checked); //MW0LGE_21j
+                    int bits = Penny.getPenny().UpdateExtCtrl(lo_band, lo_bandb, _mox, _tuning, SetupForm.TestIMD, chkExternalPA.Checked); //MW0LGE_21j
                     if (!IsSetupFormNull) SetupForm.UpdateOCLedStrip(_mox, bits);
                 }
 
@@ -31635,7 +31602,7 @@ namespace Thetis
                         UpdateTXDDSFreq(); // update tx freq
                     }
                     if (!_click_tune_display)
-                        FWCDDSFreq = rx_freq; // update rx freq
+                        RX1DDSFreq = rx_freq; // update rx freq
 
                     if (_click_tune_display) //-W2PA This was preventing proper receiver adjustment
                     {
@@ -31650,7 +31617,7 @@ namespace Thetis
                                 dTmpFreq -= CWPitch * 1.0e-6;
                                 break;
                         }
-                        FWCDDSFreq = dTmpFreq;
+                        RX1DDSFreq = dTmpFreq;
                     }
 
                     if (chkEnableMultiRX.Checked && !_mox) //MW0LGE [2.7.0.9] only when RX'ing. Fixes issue where multirx would be outside sample area after a tx
@@ -31670,9 +31637,9 @@ namespace Thetis
                 }
             }
             else if (rx1_xvtr_index >= 0)
-                FWCDDSFreq = XVTRForm.TranslateFreq(CentreFrequency);
+                RX1DDSFreq = XVTRForm.TranslateFreq(CentreFrequency);
             else
-                FWCDDSFreq = CentreFrequency;
+                RX1DDSFreq = CentreFrequency;
 
             if (small_lsd)
             {
@@ -31680,8 +31647,8 @@ namespace Thetis
                 txtVFOALSD.Visible = true;
             }
 
-            WDSP.RXANBPSetTuneFrequency(WDSP.id(0, 0), (FWCDDSFreq + f_LO) * 1.0e6);
-            WDSP.RXANBPSetTuneFrequency(WDSP.id(0, 1), (FWCDDSFreq + f_LO) * 1.0e6);
+            WDSP.RXANBPSetTuneFrequency(WDSP.id(0, 0), (RX1DDSFreq + f_LO) * 1.0e6);
+            WDSP.RXANBPSetTuneFrequency(WDSP.id(0, 1), (RX1DDSFreq + f_LO) * 1.0e6);
 
             UpdatePreamps();
 
@@ -32453,7 +32420,7 @@ namespace Thetis
 
                 if (penny_ext_ctrl_enabled) //MW0LGE_21k
                 {
-                    int bits = Penny.getPenny().UpdateExtCtrl(lo_banda, lo_band, _mox, tuning, SetupForm.TestIMD, chkExternalPA.Checked); //MW0LGE_21j
+                    int bits = Penny.getPenny().UpdateExtCtrl(lo_banda, lo_band, _mox, _tuning, SetupForm.TestIMD, chkExternalPA.Checked); //MW0LGE_21j
                     if (!IsSetupFormNull) SetupForm.UpdateOCLedStrip(_mox, bits);
                 }
             }
@@ -33969,7 +33936,7 @@ namespace Thetis
                 case DSPMode.DRM:
                     radModeDRM.BackColor = SystemColors.Control;
 
-                    vfo_offset = 0.0;
+                    _rx1_vfo_offset = 0.0;
                     if (vac_auto_enable &&
                         new_mode != DSPMode.DIGL &&
                         new_mode != DSPMode.DIGU)
@@ -33989,7 +33956,7 @@ namespace Thetis
             switch (new_mode)
             {
                 case DSPMode.LSB:
-                    vfo_offset = 0.0;
+                    _rx1_vfo_offset = 0.0;
                     radModeLSB.BackColor = button_selected_color;
 
                     if (!_rx_only && PowerOn)
@@ -34252,7 +34219,7 @@ namespace Thetis
                     break;
                 case DSPMode.DRM:
                     if_shift = false;
-                    vfo_offset = -0.012;
+                    _rx1_vfo_offset = -0.012;
                     radModeDRM.BackColor = button_selected_color;
 
                     if (vac_auto_enable)
@@ -34694,6 +34661,29 @@ namespace Thetis
             toolStripMenuItem14.Checked = radRX2Filter7.Checked;
             if (filterPopupForm != null) filterPopupForm.RepopulateForm();          // G8NJJ update popup
 
+            if (e == EventArgs.Empty) MatchTXFilterToRXFilter(); // called manually so no mouse up event
+        }
+
+        public void MatchTXFilterToRXFilter()
+        {
+            //set tx to use rx filter if shift key down
+            if (!Common.ShiftKeyDown) return;
+
+            Filter filter;
+            int tx_rx = RX2Enabled && VFOBTX ? 2 : 1;            
+            switch (tx_rx)
+            {
+                case 1:
+                    filter = rx1_filter;
+                    break;
+                case 2:
+                    filter = rx2_filter;
+                    break;
+                default:
+                    return;
+            }
+
+            SetTXFilter(filter);
         }
 
         private void radFilter_CheckedChanged(object sender, EventArgs e)
@@ -34771,6 +34761,8 @@ namespace Thetis
 
             // MW0LGE
             setSmallRX2ModeFilterLabels();
+
+            if(e == EventArgs.Empty) MatchTXFilterToRXFilter(); // called manually so no mouse up event
         }
 
         private void udFilterLow_ValueChanged(object sender, System.EventArgs e)
@@ -42629,6 +42621,11 @@ namespace Thetis
 
         private void eSCToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            showHideDiversity(true);
+        }
+
+        private void showHideDiversity(bool show, bool starting_up = false)
+        {
             if (!RX2PreampPresent) return;
 
             if (diversityForm == null || diversityForm.IsDisposed)
@@ -42638,18 +42635,50 @@ namespace Thetis
             {
                 diversityForm.Invoke(new MethodInvoker(() =>
                 {
-                    diversityForm.Show();
-                    diversityForm.Focus();
-                    UpdateDiversityValues();
-                    UpdateDiversityMenuItem();
+                    if (show)
+                    {
+                        if (starting_up)
+                        {
+                            diversityForm.Opacity = 0f;
+                            Common.FadeIn(diversityForm);
+                        }
+                        else
+                        {
+                            diversityForm.Opacity = 100f;
+                        }
+                        diversityForm.Show();
+                        diversityForm.Focus();
+                        UpdateDiversityValues();
+                        UpdateDiversityMenuItem();
+                    }
+                    else
+                    {
+                        diversityForm.Close();
+                    }
                 }));
             }
             else
             {
-                diversityForm.Show();
-                diversityForm.Focus();
-                UpdateDiversityValues();
-                UpdateDiversityMenuItem();
+                if (show)
+                {
+                    if (starting_up)
+                    {
+                        diversityForm.Opacity = 0f;
+                        Common.FadeIn(diversityForm);
+                    }
+                    else
+                    {
+                        diversityForm.Opacity = 100f;
+                    }
+                    diversityForm.Show();
+                    diversityForm.Focus();
+                    UpdateDiversityValues();
+                    UpdateDiversityMenuItem();
+                }
+                else
+                {
+                    diversityForm.Close();
+                }
             }
         }
 
@@ -45588,7 +45617,7 @@ namespace Thetis
 
             if (penny_ext_ctrl_enabled) //MW0LGE_21k
             {
-                int bits = Penny.getPenny().UpdateExtCtrl(lo_band, lo_bandb, _mox, tuning, SetupForm.TestIMD, chkExternalPA.Checked);
+                int bits = Penny.getPenny().UpdateExtCtrl(lo_band, lo_bandb, _mox, _tuning, SetupForm.TestIMD, chkExternalPA.Checked);
                 if (!IsSetupFormNull) SetupForm.UpdateOCLedStrip(_mox, bits);
             }
 
@@ -47570,7 +47599,7 @@ namespace Thetis
                 default:
                     // otherwise error
                     toolStripStatusLabel_CMstatus.Image = Properties.Resources.cm_red;
-                    toolStripStatusLabel_CMstatus.ToolTipText = "Issue starting CM ASIO. Check driver name in registry.";
+                    toolStripStatusLabel_CMstatus.ToolTipText = "Issue starting CM ASIO. Check driver name in registry.\nAlso check in/out channels.";
                     toolStripStatusLabel_CMstatus.Visible = true;
                     break;
             }
@@ -47913,7 +47942,7 @@ namespace Thetis
                         }
                     }
                     break;
-                case "diversity": eSCToolStripMenuItem_Click(this, e); break;
+                case "diversity": showHideDiversity(true); break;
                 case "ra": RAtoolStripMenuItem_Click(this, e); break;
                 case "wb": wBToolStripMenuItem_Click(this, e); break;
                 case "finder": finderMenuItem_Click(this, e); break;
@@ -51194,7 +51223,7 @@ namespace Thetis
                 case OtherButtonId.FORM_EQ: equalizerToolStripMenuItem_Click(this, EventArgs.Empty); break;
                 case OtherButtonId.FORM_XVTR: xVTRsToolStripMenuItem_Click(this, EventArgs.Empty); break;
                 case OtherButtonId.FORM_CWX: cWXToolStripMenuItem_Click(this, EventArgs.Empty); break;
-                case OtherButtonId.FORM_DIVERSITY: eSCToolStripMenuItem_Click(this, EventArgs.Empty); break;
+                case OtherButtonId.FORM_DIVERSITY: showHideDiversity(true); break;
                 case OtherButtonId.FORM_LINEARITY: linearityToolStripMenuItem_Click(this, EventArgs.Empty); break;
                 case OtherButtonId.FORM_WB: wBToolStripMenuItem_Click(this, EventArgs.Empty); break;
 
@@ -53152,6 +53181,16 @@ namespace Thetis
         private void btnAPF_type_MouseDown(object sender, MouseEventArgs e)
         {
             if (IsRightButton(e)) SetupForm.ShowSetupTab(Setup.SetupTab.DSPAudio_Tab);
+        }
+
+        private void radFilter_rx1_MouseUp(object sender, MouseEventArgs e)
+        {
+            MatchTXFilterToRXFilter();
+        }
+
+        private void radFilter_rx2_MouseUp(object sender, MouseEventArgs e)
+        {
+            MatchTXFilterToRXFilter();
         }
     }
 

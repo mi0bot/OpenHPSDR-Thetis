@@ -1409,9 +1409,7 @@ namespace Thetis
         }
         public class clsIGSettings
         {
-            // TODO change all these unique settings to a Dictionary collection   _settings = new Dictionary<string, object>
             private ConcurrentDictionary<string, object> _settings;
-            //
 
             private int _updateInterval;
             private float _decay;
@@ -1463,9 +1461,7 @@ namespace Thetis
 
             public clsIGSettings()
             {
-                //
                 _settings = new ConcurrentDictionary<string, object>();
-                //
 
                 _readingSource = Reading.NONE;
                 _barStyle = clsBarItem.BarStyle.None;
@@ -7824,9 +7820,9 @@ namespace Thetis
 
                 Filter f = (Filter)((int)Filter.F1 + index);
 
-                setFilter(f, Common.ShiftKeyDown);
+                setFilter(f);
             }
-            private void setFilter(Filter f, bool shift)
+            private void setFilter(Filter f)
             {
                 //note rx2 only has 9 filters
                 if (f == Filter.FIRST) return;
@@ -7835,20 +7831,16 @@ namespace Thetis
                 {
                     _console.BeginInvoke(new MethodInvoker(() =>
                     {
-                        if (shift)
-                            _console.SetTXFilter(f);
-                        else
-                            _console.RX2Filter = f;
+                        _console.RX2Filter = f;
+                        _console.MatchTXFilterToRXFilter();
                     }));
                 }
                 else
                 {
                     _console.BeginInvoke(new MethodInvoker(() =>
                     {
-                        if (shift)
-                            _console.SetTXFilter(f);
-                        else
-                            _console.RX1Filter = f;
+                        _console.RX1Filter = f;
+                        _console.MatchTXFilterToRXFilter();
                     }));
                 }
             }
