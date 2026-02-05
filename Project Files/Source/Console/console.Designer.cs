@@ -507,6 +507,7 @@
             this.timer_cpu_volts_meter = new System.Windows.Forms.Timer(this.components);
             this.timer_peak_text = new System.Windows.Forms.Timer(this.components);
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.lblPAProfile = new System.Windows.Forms.LabelTS();
             this.btnAPF_type = new System.Windows.Forms.ButtonTS();
             this.ptbCWAPFGain = new Thetis.PrettyTrackBar();
             this.ptbCWAPFBandwidth = new Thetis.PrettyTrackBar();
@@ -532,7 +533,6 @@
             this.chkRX2Preamp = new System.Windows.Forms.CheckBoxTS();
             this.chkRX1Preamp = new System.Windows.Forms.CheckBoxTS();
             this.chkDX = new System.Windows.Forms.CheckBoxTS();
-            this.lblPAProfile = new System.Windows.Forms.LabelTS();
             this.ptbFilterShift = new Thetis.PrettyTrackBar();
             this.ptbFilterWidth = new Thetis.PrettyTrackBar();
             this.btnFilterShiftReset = new System.Windows.Forms.ButtonTS();
@@ -907,7 +907,9 @@
             this.toolStripMenuItem17 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripStatusLabelAndromedaMulti = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel_Fill = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel_PAstatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel_N1MM = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatus_PAspacer = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel_TCI = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel_CatTCPip = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel_CatSerial = new System.Windows.Forms.ToolStripStatusLabel();
@@ -1247,6 +1249,15 @@
             // 
             this.timer_peak_text.Interval = 500;
             this.timer_peak_text.Tick += new System.EventHandler(this.timer_peak_text_Tick);
+            // 
+            // lblPAProfile
+            // 
+            this.lblPAProfile.BackColor = System.Drawing.Color.Transparent;
+            resources.ApplyResources(this.lblPAProfile, "lblPAProfile");
+            this.lblPAProfile.ForeColor = System.Drawing.Color.White;
+            this.lblPAProfile.Name = "lblPAProfile";
+            this.toolTip1.SetToolTip(this.lblPAProfile, resources.GetString("lblPAProfile.ToolTip"));
+            this.lblPAProfile.MouseDown += new System.Windows.Forms.MouseEventHandler(this.lblPAProfile_MouseDown);
             // 
             // btnAPF_type
             // 
@@ -1597,15 +1608,6 @@
             this.chkDX.Name = "chkDX";
             this.toolTip1.SetToolTip(this.chkDX, resources.GetString("chkDX.ToolTip"));
             this.chkDX.CheckedChanged += new System.EventHandler(this.chkDX_CheckedChanged);
-            // 
-            // lblPAProfile
-            // 
-            this.lblPAProfile.BackColor = System.Drawing.Color.Transparent;
-            resources.ApplyResources(this.lblPAProfile, "lblPAProfile");
-            this.lblPAProfile.ForeColor = System.Drawing.Color.White;
-            this.lblPAProfile.Name = "lblPAProfile";
-            this.toolTip1.SetToolTip(this.lblPAProfile, resources.GetString("lblPAProfile.ToolTip"));
-            this.lblPAProfile.MouseDown += new System.Windows.Forms.MouseEventHandler(this.lblPAProfile_MouseDown);
             // 
             // ptbFilterShift
             // 
@@ -5014,7 +5016,9 @@
             this.toolStripStatusLabelTXAnt,
             this.toolStripStatusLabelAndromedaMulti,
             this.toolStripStatusLabel_Fill,
+            this.toolStripStatusLabel_PAstatus,
             this.toolStripStatusLabel_N1MM,
+            this.toolStripStatus_PAspacer,
             this.toolStripStatusLabel_TCI,
             this.toolStripStatusLabel_CatTCPip,
             this.toolStripStatusLabel_CatSerial,
@@ -5342,6 +5346,15 @@
             this.toolStripStatusLabel_Fill.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
             this.toolStripStatusLabel_Fill.Spring = true;
             // 
+            // toolStripStatusLabel_PAstatus
+            // 
+            this.toolStripStatusLabel_PAstatus.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.toolStripStatusLabel_PAstatus.Image = global::Thetis.Properties.Resources.paflt;
+            resources.ApplyResources(this.toolStripStatusLabel_PAstatus, "toolStripStatusLabel_PAstatus");
+            this.toolStripStatusLabel_PAstatus.Name = "toolStripStatusLabel_PAstatus";
+            this.toolStripStatusLabel_PAstatus.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
+            this.toolStripStatusLabel_PAstatus.MouseUp += new System.Windows.Forms.MouseEventHandler(this.toolStripStatusLabel_PAstatus_MouseUp);
+            // 
             // toolStripStatusLabel_N1MM
             // 
             resources.ApplyResources(this.toolStripStatusLabel_N1MM, "toolStripStatusLabel_N1MM");
@@ -5349,6 +5362,11 @@
             this.toolStripStatusLabel_N1MM.Image = global::Thetis.Properties.Resources.n1mm;
             this.toolStripStatusLabel_N1MM.Name = "toolStripStatusLabel_N1MM";
             this.toolStripStatusLabel_N1MM.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
+            // 
+            // toolStripStatus_PAspacer
+            // 
+            resources.ApplyResources(this.toolStripStatus_PAspacer, "toolStripStatus_PAspacer");
+            this.toolStripStatus_PAspacer.Name = "toolStripStatus_PAspacer";
             // 
             // toolStripStatusLabel_TCI
             // 
@@ -7899,5 +7917,7 @@
         private ToolStripMenuItem NR3ToolStripMenuItem_rx2;
         private ToolStripMenuItem NR4ToolStripMenuItem_rx2;
         private ButtonTS btnAPF_type;
+        private ToolStripStatusLabel toolStripStatusLabel_PAstatus;
+        private ToolStripStatusLabel toolStripStatus_PAspacer;
     }
 }

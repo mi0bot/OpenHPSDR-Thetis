@@ -3205,10 +3205,14 @@ namespace Thetis
             }
             a.Add("console_state/" + ((int)this.WindowState).ToString()); //MW0LGE_21 window state
 
-            if (SetupForm.WindowState != FormWindowState.Minimized)//[2.10.3.6]MW0LGE prevent garbage being stored if shutdown when minimsed
+            if (!IsSetupFormNull) // very rare case where setup form is null on exit, and would cause another instance
+                                  // why null on exit? not sure yet. TODO
             {
-                a.Add("setup_top/" + SetupForm.Top.ToString());
-                a.Add("setup_left/" + SetupForm.Left.ToString());
+                if (SetupForm.WindowState != FormWindowState.Minimized)//[2.10.3.6]MW0LGE prevent garbage being stored if shutdown when minimsed
+                {
+                    a.Add("setup_top/" + SetupForm.Top.ToString());
+                    a.Add("setup_left/" + SetupForm.Left.ToString());
+                }
             }
 
             a.Add("IncludeWindowBorders/" + m_bIncludeWindowBorders);   // used in status bar resize form calcs
@@ -3232,8 +3236,8 @@ namespace Thetis
             a.Add("Version/" + this.Text);		// save the current version
             a.Add("VersionNumber/" + ver_num);      // Thetis version number in a.b.c format
             a.Add("BandTextID/" + current_region);  // TURF Region
-            a.Add("Metis_IP_address/" + NetworkIO.HpSdrHwIpAddress.ToString(nfi));
-            a.Add("EthernetHostIPAddress/" + NetworkIO.EthernetHostIPAddress.ToString(nfi));
+            //a.Add("Metis_IP_address/" + NetworkIO.HpSdrHwIpAddress.ToString(nfi));
+            //a.Add("EthernetHostIPAddress/" + NetworkIO.EthernetHostIPAddress.ToString(nfi));
 
             a.Add("PruneBackups/" + DBMan.PruneBackups.ToString());
 
@@ -4004,12 +4008,12 @@ namespace Thetis
                     case "rx2_display_grid_min_xvtr":
                         rx2_display_grid_min_xvtr = float.Parse(val);
                         break;
-                    case "Metis_IP_address":
-                        NetworkIO.HpSdrHwIpAddress = val;
-                        break;
-                    case "EthernetHostIPAddress":
-                        NetworkIO.EthernetHostIPAddress = val;
-                        break;
+                    //case "Metis_IP_address":
+                    //    NetworkIO.HpSdrHwIpAddress = val;
+                    //    break;
+                    //case "EthernetHostIPAddress":
+                    //    NetworkIO.EthernetHostIPAddress = val;
+                    //    break;
                     case "infoBar_flip": //MW0LGE_21k9rc4
                         infoBar.CurrentFlip = int.Parse(val);
                         break;
@@ -14009,7 +14013,7 @@ namespace Thetis
         public void SetupForHPSDRModel()
         {
             chkFullDuplex.Visible = false;
-            NetworkIO.fwVersionsChecked = false;
+            NetworkIO.FWVersionsChecked = false;
 
             switch (HardwareSpecific.Model)
             {
@@ -16121,7 +16125,7 @@ namespace Thetis
 
         // property set when An Andromeda panel is connected via a serial CAT port.
         // NOT used for G2 panel accessed via TCP/IP
-
+        // when connection established, request ID.
         private bool andromeda_cat_enabled;
         public bool AndromedaCATEnabled
         {
@@ -16137,7 +16141,8 @@ namespace Thetis
                         if (andromeda_cat_enabled)
                         {
                             AndromedaSiolisten.enableCAT5();
-                            InitialiseAndromedaIndicators(true);           // initialise the panel LEDs
+                            MakeAndromedaVersionRequestMsg();
+                            //InitialiseAndromedaIndicators(true);           // initialise the panel LEDs   g8njj now done by ZZZS response
                             toolStripStatusLabelAndromedaMulti.Visible = true;
                         }
                         else
@@ -18371,16 +18376,6 @@ namespace Thetis
                 }
 
                 if (oldValue != alexpresent) AlexPresentChangedHandlers?.Invoke(oldValue, alexpresent); //MW0LGE_[2.9.0.7]
-            }
-        }
-
-        private string hpsdr_network_ip_addr;
-        public string HPSDRNetworkIPAddr
-        {
-            get { return hpsdr_network_ip_addr; }
-            set
-            {
-                hpsdr_network_ip_addr = value;
             }
         }
 
@@ -27150,7 +27145,8 @@ namespace Thetis
 
                 timer_peak_text.Enabled = false;
 
-                NetworkIO.StopAudio();
+                //NetworkIO.StopAudio();
+                Audio.Stop();
 
                 if (vac_enabled)
                 {
@@ -44497,6 +44493,8 @@ namespace Thetis
             toolStripStatusLabel_CatTCPip.Width = 22;
             toolStripStatusLabel_CatSerial.Width = 22;
             toolStripStatusLabel_CMstatus.Width = 22;
+            toolStripStatus_PAspacer.Width = 16;
+            toolStripStatusLabel_PAstatus.Width = 32;
 
             toolStripStatusLabel_timer.Width = 80;
             toolStripStatusLabel_UTCTime.Width = 92;
@@ -45457,7 +45455,7 @@ namespace Thetis
         private void OnModeChangeHandler(int rx, DSPMode oldMode, DSPMode newMode, Band oldBand, Band newBand)
         {
             //reset the cw auto mode return [2.10.3.12]MW0LGE
-            if(!(newMode == DSPMode.CWL || newMode == DSPMode.CWU))
+            if (!(newMode == DSPMode.CWL || newMode == DSPMode.CWU))
             {
                 _old_cw_auto_mode = DSPMode.FIRST;
             }
@@ -46037,8 +46035,9 @@ namespace Thetis
         }
         private void btnDisplayZTB_Click(object sender, EventArgs e)
         {
-            MouseButtons mb = ((MouseEventArgs)e).Button;
-            ZoomToBand(mb == MouseButtons.Right);
+            MouseEventArgs me = e as MouseEventArgs;
+            bool is_right = me != null && me.Button == MouseButtons.Right;
+            ZoomToBand(is_right);
         }
 
         private void setupZTBButton()
@@ -47703,17 +47702,20 @@ namespace Thetis
         private ToolTip m_statusBarToolTip = null;
         private void addStatusStripToolTipHandlers()
         {
+            // this resolves issue where tooltips are not show on status bar items
             toolStripStatusLabel_CMstatus.MouseHover += toolTipItemMouseHover;
             toolStripStatusLabel_N1MM.MouseHover += toolTipItemMouseHover;
             toolStripStatusLabel_CatTCPip.MouseHover += toolTipItemMouseHover;
             toolStripStatusLabel_CatSerial.MouseHover += toolTipItemMouseHover;
             toolStripStatusLabel_TCI.MouseHover += toolTipItemMouseHover;
+            toolStripStatusLabel_PAstatus.MouseHover += toolTipItemMouseHover;
 
             toolStripStatusLabel_CMstatus.MouseLeave += toolTipItemMouseLeave;
             toolStripStatusLabel_N1MM.MouseLeave += toolTipItemMouseLeave;
             toolStripStatusLabel_CatTCPip.MouseLeave += toolTipItemMouseLeave;
             toolStripStatusLabel_CatSerial.MouseLeave += toolTipItemMouseLeave;
             toolStripStatusLabel_TCI.MouseLeave += toolTipItemMouseLeave;
+            toolStripStatusLabel_PAstatus.MouseLeave += toolTipItemMouseLeave;
         }
 
         private void toolTipItemMouseHover(object sender, EventArgs e)
@@ -48274,12 +48276,12 @@ namespace Thetis
                             break;
                     }                    
                     sProto = "2";
-                    sSupportedProtocol = NetworkIO.ProtocolSupported.ToString("0\\.0");
+                    sSupportedProtocol = NetworkIO.Protocol2VersionSupported.ToString("0\\.0");
                 }
                 else
                 {
                     if (HPSDRModel.HERMESLITE == HardwareSpecific.Model)
-                        sFW = NetworkIO.FWCodeVersion.ToString("0\\.0") + NetworkIO.FWCodeVersionMinor.ToString("\\.0");
+                        sFW = NetworkIO.FWCodeVersion.ToString("0\\.0") + NetworkIO.BetaVersion.ToString("\\.0");
                     else
                         sFW = NetworkIO.FWCodeVersion.ToString("0\\.0");
 
@@ -48450,14 +48452,13 @@ namespace Thetis
             if (!BPFToolStripMenuItem.DropDown.Visible) BPFToolStripMenuItem.ShowDropDown();
         }
 
-        private Dictionary<string, double> _minimum_rx_notch_width = new Dictionary<string, double>();
+        private Dictionary<int, double> _minimum_rx_notch_width = new Dictionary<int, double>();
         private double _minimum_tx_notch_width = 100;
         public double GetMinimumRXNotchWidth(int rx)
         {
-            if(rx<1 || rx>2) return 100;
+            if(rx < 1 || rx > 2) return 100;
 
-            string key = rx.ToString();
-            if(_minimum_rx_notch_width.ContainsKey(key)) return _minimum_rx_notch_width[key];
+            if(_minimum_rx_notch_width.ContainsKey(rx - 1)) return _minimum_rx_notch_width[rx - 1];
             return 100;
         }
         public double GetMinimumTXNotchWidth()
@@ -48484,14 +48485,13 @@ namespace Thetis
                     WDSP.RXANBPGetMinNotchWidth(chan, &min_notch_width);
                 }
 
-                string key = rx.ToString();
-                if (_minimum_rx_notch_width.ContainsKey(key))
+                if (_minimum_rx_notch_width.ContainsKey(rx - 1))
                 {
-                    _minimum_rx_notch_width[key] = min_notch_width;
+                    _minimum_rx_notch_width[rx - 1] = min_notch_width;
                 }
                 else
                 {
-                    _minimum_rx_notch_width.Add(key, min_notch_width);
+                    _minimum_rx_notch_width.Add(rx - 1, min_notch_width);
                 }
 
                 MinimumRXNotchWidthChangedHandlers?.Invoke(rx, min_notch_width);
@@ -53192,6 +53192,68 @@ namespace Thetis
         {
             MatchTXFilterToRXFilter();
         }
+
+        #region PA_STATUS_INDICATOR
+        //Support for Ganymede PA status
+        private void toolStripStatusLabel_PAstatus_MouseUp(object sender, MouseEventArgs e)
+        {
+            // user clicks the status bar item, do something...
+            if(e.Button == MouseButtons.Right)
+            {
+                // show PA status form
+                SetupForm.ShowSetupTab(Setup.SetupTab.OtherHW_PA_Tab);
+            }
+            else
+            {
+                if ((_pa_status_indicator & PAstatusIndicatorState.Resettable) != 0)
+                    GanymedeResetPressed();
+            }
+        }
+        
+        private PAstatusIndicatorState _pa_status_indicator = PAstatusIndicatorState.NotUsed; // PAstatusIndicatorState is a flag based enum in Enums.cs
+        private PAstatusIndicatorState PAStatusIndicator
+        {
+            // used to set the state of the status bar icon, and display spectral area
+            // eg. PAStatusIndicator = PAstatusIndicatorState.NotUsed;
+            //     PAStatusIndicator = PAstatusIndicatorState.Voltage | PAstatusIndicatorState.Temperature;
+            get { return _pa_status_indicator; }
+            set
+            {
+                if (_pa_status_indicator == value) return;
+
+                _pa_status_indicator = value;
+                Display.PAStatus = _pa_status_indicator;
+
+                if (value == PAstatusIndicatorState.NotUsed)
+                {
+                    toolStripStatusLabel_PAstatus.Visible = false;
+                    return;
+                }
+
+                toolStripStatusLabel_PAstatus.Visible = true;
+                toolStripStatusLabel_PAstatus.ToolTipText = GetPAStatusText(value);
+
+                PAstatusIndicatorState fault_mask = PAstatusIndicatorState.ReversePower |
+                                                    PAstatusIndicatorState.DrainCurrent |
+                                                    PAstatusIndicatorState.PSUVoltage |
+                                                    PAstatusIndicatorState.HeatsinkTemperature |
+                                                    PAstatusIndicatorState.ForwardPower |
+                                                    PAstatusIndicatorState.Resettable;
+
+                PAstatusIndicatorState faults = value & fault_mask;
+
+                if (((value & PAstatusIndicatorState.OK) != 0) || faults == 0)
+                {
+                    toolStripStatusLabel_PAstatus.Width = Properties.Resources.paok.Width;
+                    toolStripStatusLabel_PAstatus.Image = Properties.Resources.paok;
+                    return;
+                }
+
+                toolStripStatusLabel_PAstatus.Width = Properties.Resources.paflt.Width;
+                toolStripStatusLabel_PAstatus.Image = Properties.Resources.paflt;
+            }
+        }
+        #endregion
     }
 
     public class DigiMode

@@ -52,7 +52,7 @@ int SendStartToMetis(void) {
 	starting_seq = MetisLastRecvSeq;
 	for (i = 0; i < 5; i++) {
 		ForceCandCFrame(1);
-		sendPacket(listenSock, (char*)&outpacket, sizeof(outpacket), RemotePort);	// MI0BOT: Remote port configurable 
+		sendPacket(listenSock, (char*)&outpacket, sizeof(outpacket), prn->base_outbound_port);// 1024);
 		MetisReadDirect((unsigned char*)&inpacket);
 		if (MetisLastRecvSeq != starting_seq) {
 			break;
@@ -86,7 +86,7 @@ int SendStopToMetis() {
 
 	starting_seq = MetisLastRecvSeq;
 	for (i = 0; i < 5; i++) {
-		sendPacket(listenSock, (char*)&outpacket, sizeof(outpacket), RemotePort);	// MI0BOT: Remote port configurable 
+		sendPacket(listenSock, (char*)&outpacket, sizeof(outpacket), prn->base_outbound_port);// 1024);
 		Sleep(10);
 		if (MetisLastRecvSeq == starting_seq) {
 			break;
@@ -231,7 +231,7 @@ int MetisWriteFrame(int endpoint, char* bufp) {
 	++MetisOutBoundSeqNum;
 	memcpy(outpacket.framebuf + 8, bufp, 1024);
 
-	result = sendPacket(listenSock, (char*)&outpacket, 1024 + 8, RemotePort);	// MI0BOT: Remote port configurable 
+	result = sendPacket(listenSock, (char*)&outpacket, 1024 + 8, prn->base_outbound_port);// 1024);
 	result -= 8;
 	return result;
 }
@@ -249,7 +249,7 @@ DWORD WINAPI MetisReadThreadMain(LPVOID n) {
 	ReleaseSemaphore(prn->hReadThreadInitSem, 1, NULL);
 	printf("MetisReadThread runs...\n"); fflush(stdout);
 
-	if (prn->discovery.BoardType == HermesLite)	// MI0BOT: Different read loop for HL2
+	if (HPSDRModel == HPSDRModel_HERMESLITE)	// MI0BOT: Different read loop for HL2
 		MetisReadThreadMainLoop_HL2();
 	else
 		MetisReadThreadMainLoop();
@@ -260,7 +260,7 @@ DWORD WINAPI MetisReadThreadMain(LPVOID n) {
 	return 0;
 }
 
-void twist (int nsamples, int stream0, int stream1, int port)
+void twist (int nsamples, int stream0, int stream1, int source)
 {
 	int i, j;
 	for (i = 0, j = 0; i < 2 * nsamples; i += 2, j += 4)
@@ -270,7 +270,7 @@ void twist (int nsamples, int stream0, int stream1, int port)
 		prn->RxReadBufp[j + 2] = prn->RxBuff[stream1][i + 0];
 		prn->RxReadBufp[j + 3] = prn->RxBuff[stream1][i + 1];
 	}
-	xrouter(0, 0, port, 2 * nsamples, prn->RxReadBufp);
+	xrouter(0, 0, source, 2 * nsamples, prn->RxReadBufp);
 }
 
 void MetisReadThreadMainLoop(void)
@@ -378,17 +378,17 @@ void MetisReadThreadMainLoop(void)
 							switch (nddc)
 							{
 							case 2:
-								twist(spr, 0, 1, 1035);
+								twist(spr, 0, 1, 0);
 								break;
 							case 4:
-								xrouter(0, 0, 1035, spr, prn->RxBuff[0]);
-								twist(spr, 2, 3, 1036);
-								xrouter(0, 0, 1037, spr, prn->RxBuff[1]);
+								xrouter(0, 0, 0, spr, prn->RxBuff[0]);
+								twist(spr, 2, 3, 1);
+								xrouter(0, 0, 2, spr, prn->RxBuff[1]);
 								break;
 							case 5:
-								twist(spr, 0, 1, 1035);
-								twist(spr, 3, 4, 1036);
-								xrouter(0, 0, 1037, spr, prn->RxBuff[2]);
+								twist(spr, 0, 1, 0);
+								twist(spr, 3, 4, 1);
+								xrouter(0, 0, 2, spr, prn->RxBuff[2]);
 								break;
 							}
 							mic_sample_count = 0;
@@ -448,7 +448,7 @@ void MetisReadThreadMainLoop_HL2(void)
 			prop = NULL; // this needed bacause of a change to ForceReset in setup.cs
 			continue;
 		}
-		else
+		else 
 		{
 			WSAEnumNetworkEvents(listenSock, prn->hDataEvent, &prn->wsaProcessEvents);
 			if (prn->wsaProcessEvents.lNetworkEvents & FD_READ)
@@ -487,7 +487,7 @@ void MetisReadThreadMainLoop_HL2(void)
 									prn->i2c.read_data[1] = ControlBytesIn[2];
 									prn->i2c.read_data[2] = ControlBytesIn[3];
 									prn->i2c.read_data[3] = ControlBytesIn[4];
-
+							
 									prn->i2c.ctrl_read_available = 1;
 								}
 							}
@@ -544,17 +544,17 @@ void MetisReadThreadMainLoop_HL2(void)
 							switch (nddc)
 							{
 							case 2:
-								twist(spr, 0, 1, 1035);
+								twist(spr, 0, 1, 0);
 								break;
 							case 4:
-								xrouter(0, 0, 1035, spr, prn->RxBuff[0]);
-								twist(spr, 2, 3, 1036);
-								xrouter(0, 0, 1037, spr, prn->RxBuff[1]);
+								xrouter(0, 0, 0, spr, prn->RxBuff[0]);
+								twist(spr, 2, 3, 1);
+								xrouter(0, 0, 2, spr, prn->RxBuff[1]);
 								break;
 							case 5:
-								twist(spr, 0, 1, 1035);
-								twist(spr, 3, 4, 1036);
-								xrouter(0, 0, 1037, spr, prn->RxBuff[2]);
+								twist(spr, 0, 1, 0);
+								twist(spr, 3, 4, 1);
+								xrouter(0, 0, 2, spr, prn->RxBuff[2]);
 								break;
 							}
 							mic_sample_count = 0;
@@ -584,7 +584,6 @@ void MetisReadThreadMainLoop_HL2(void)
 		}
 	}
 }
-
 
 void WriteMainLoop(char* bufp)
 {
@@ -885,10 +884,10 @@ void WriteMainLoop_HL2(char* bufp)
 		// so it is now sent at the same rate as everything else
 		C0 = (unsigned char)XmitBit;
 
-		//if (0 != prn->i2c.delay)
-		//{
-		//	prn->i2c.delay--;
-		//}
+		if (0 != prn->i2c.delay)
+		{
+			prn->i2c.delay--;
+		}
 
 		if ((0 >= --prn->i2c.delay) &&
 			(prn->i2c.in_index != prn->i2c.out_index))
@@ -1230,7 +1229,7 @@ DWORD WINAPI sendProtocol1Samples(LPVOID n)
 					temp = pbuffs[j][i * 2 + k] >= 0.0 ? (short)floor(pbuffs[j][i * 2 + k] * 32767.0 + 0.5) :
 						(short)ceil(pbuffs[j][i * 2 + k] * 32767.0 - 0.5);
 					if (prn->cw.cw_enable && j == 1)
-						if (prn->discovery.BoardType == HermesLite)
+						if (HPSDRModel == HPSDRModel_HERMESLITE)
 							temp = (prn->tx[0].cwx_ptt << 3 |	// MI0BOT: Bit 3 in HL2 is used to signal PTT for CWX
 						    		prn->tx[0].dot << 2 |
 									prn->tx[0].dash << 1 |
@@ -1243,7 +1242,7 @@ DWORD WINAPI sendProtocol1Samples(LPVOID n)
 					prn->OutBufp[8 * i + 4 * j + 2 * k + 1] = (char)(temp & 0xff);
 				}
 
-		if (prn->discovery.BoardType == HermesLite)	// MI0BOT: Different write loop for HL2
+		if (HPSDRModel == HPSDRModel_HERMESLITE)	// MI0BOT: Different write loop for HL2
 			WriteMainLoop_HL2(prn->OutBufp);
 		else
 			WriteMainLoop(prn->OutBufp);

@@ -63,6 +63,7 @@ namespace Thetis
     using System.IO.Ports;
     using RawInput_dll;
     using System.Net;
+    using System.Net.Sockets;
     using System.Threading.Tasks;
     //using Ionic.Zip;
     using System.IO.Compression;
@@ -125,7 +126,7 @@ namespace Thetis
         internal void AfterConstructor()
         {
             LogTool.AddLogEntry("      Setup setup controls...", "SETUP_CONT");
-            Splash.SetStatus("Setting up controls");
+            Splash.SetStatus("Setting up controls");            
 
             //[2.10.3.9]MW0LGE atempt to get the model as soon as possile, before the getoptions, so that everything that relies on it at least has a chance
             HardwareSpecific.Model = getModelFromDB();
@@ -401,10 +402,12 @@ namespace Thetis
             defaultLinearGradients(true, true, false);
             defaultLinearGradients(true, true, true);
 
+            setupNeworking(); //prior to getOptions so speed profile combo is initialsed
+
             LogTool.AddLogEntry("        Setup getting options...", "GETOPTIONS");
             getOptions();
             LogTool.Completed("GETOPTIONS");
-
+           
             selectSkin();
 
             //MW0LGE [2.9.0.7] setup amp/volts calibration
@@ -658,6 +661,7 @@ namespace Thetis
             console.RX2EnabledChangedHandlers += OnRX2EnabledChanged;
             console.TXInhibitChangedHandlers += OnTXInhibit;
             console.BandChangeHandlers += OnBCDBandChangeHandler;
+            console.PowerChangeHanders += OnPowerChangeHandler;
 
             ThetisSkinService.SubscribeForSkinServerData(skinServersDataReceivedHandler);
             ThetisSkinService.SubscribeForSkinData(skinDataReceivedHandler);
@@ -680,6 +684,7 @@ namespace Thetis
             console.RX2EnabledChangedHandlers -= OnRX2EnabledChanged;
             console.TXInhibitChangedHandlers -= OnTXInhibit;
             console.BandChangeHandlers -= OnBCDBandChangeHandler;
+            console.PowerChangeHanders -= OnPowerChangeHandler;
 
             ThetisSkinService.UnsubscribeFromSkinData(skinDataReceivedHandler);
             ThetisSkinService.UnsubscribeFromSkinServerData(skinServersDataReceivedHandler);
@@ -1071,7 +1076,7 @@ namespace Thetis
                 udHermesStepAttenuatorData.Minimum = -28;
                 udHermesStepAttenuatorDataRX2.Minimum = -28;
                 udTXTunePower.Minimum = (Decimal)(-16.5);
-                chkEnableStaticIP_CheckedChanged(this, EventArgs.Empty);
+                //chkEnableStaticIP_CheckedChanged(this, EventArgs.Empty);
                 chkHL2PsSync_CheckedChanged(this, EventArgs.Empty);
                 lblADCLinked.Visible = false;
             }
@@ -1622,6 +1627,9 @@ namespace Thetis
             a.Add("multimeter_io2", MultiMeterIO.GetSaveData());
             //
 
+            // store discovered radios
+            a.Add("discovered_radios", ucRadioList_Radios.SaveToJson());
+
             // remove any outdated options from the DB MW0LGE_22b
             removeOutdatedOptions();
 
@@ -1659,21 +1667,6 @@ namespace Thetis
             }
             if (getDict.ContainsKey("chkRadioProtocolSelect_checkstate")) //[2.10.3.5]MW0LGE this is no longer used
             {
-                CheckState cs = (CheckState)(Enum.Parse(typeof(CheckState), getDict["chkRadioProtocolSelect_checkstate"]));
-
-                switch (cs)
-                {
-                    case CheckState.Checked: // auto
-                        radRadioProtocolAutoSelect.Checked = true;
-                        break;
-                    case CheckState.Indeterminate: // p1
-                        radRadioProtocol1Select.Checked = true;
-                        break;
-                    case CheckState.Unchecked: // p2
-                        radRadioProtocol2Select.Checked = true;
-                        break;
-                }
-
                 _oldSettings.Add("chkRadioProtocolSelect_checkstate");
             }
 
@@ -1920,6 +1913,10 @@ namespace Thetis
                     {
                         // ignore, done later
                     }
+                    else if (name == "ucRadioList_Radios") // radio list user control
+                    {
+                        // ignore, done later
+                    }
                     else
                     {
                         Debug.WriteLine("Control not found: " + name);
@@ -2025,6 +2022,16 @@ namespace Thetis
 
             if (loadTXProfile(comboTXProfileName.Text)) _current_profile = comboTXProfileName.Text;
             else _current_profile = "";
+
+            //recover discovered radios
+            if (a.ContainsKey("discovered_radios"))
+            {
+                ucRadioList_Radios.LoadFromJson(a["discovered_radios"]);
+            }
+            else
+            {
+                ucRadioList_Radios.ClearRadios();
+            }
 
             _gettingOptions = false;
         }
@@ -2175,18 +2182,22 @@ namespace Thetis
             // General Tab
             comboRadioModel_SelectedIndexChanged(this, e);
 
+            chkAdvancedNetworkingSettings_CheckedChanged(this, e);
             udGeneralLPTDelay_ValueChanged(this, e);
             chkGeneralRXOnly_CheckedChanged(this, e);
             comboGeneralXVTR_SelectedIndexChanged(this, e);
             chkGeneralDisablePTT_CheckedChanged(this, e);
-            chkFullDiscovery_CheckedChanged(this, e);
-            btnSetIPAddr_Click(this, e);
             radOrionPTTOff_CheckedChanged(this, e);
             radOrionMicTip_CheckedChanged(this, e);
             radOrionBiasOn_CheckedChanged(this, e);
             chkNetworkWDT_CheckedChanged(this, e);
 
-            radRadioProtocolSelect_CheckedChanged(this, e);
+            //radRadioProtocolSelect_CheckedChanged(this, e);
+            ucRadioList_Radios_SelectedRadioChanged(this, e);
+            radViaNics_CheckedChanged(this, e);
+            radAnyOrSpecificRadio_CheckedChanged(this, e);
+            radDefaultOrRandomListenPort_CheckedChanged(this, e);
+
             chkTuneStepPerModeRX1_CheckedChanged(this, e);
             chkCTUNignore0beat_CheckedChanged(this, e); //MW0LGE_21k9d
 
@@ -6066,50 +6077,45 @@ namespace Thetis
         public TabControl TabSetup
         {
             get { return tcSetup; }
-            set { tcSetup = value; }
         }
         public TabControl TabPowerAmplifier
         {
             get { return tcPowerAmplifier; }
-            set { tcPowerAmplifier = value; }
         }
         public TabControl TabGeneral
         {
             get { return tcGeneral; }
-            set { tcGeneral = value; }
         }
         public TabControl TabOptions
         {
             get { return tcOptions; }
-            set { tcOptions = value; }
         }
         public TabControl TabDisplay
         {
             get { return tcDisplay; }
-            //set { tcDisplay = value; }
         }
         public TabControl TabAppearance
         {
             get { return tcAppearance; }
-            //set { tcAppearance = value; }
         }
         public TabControl TabDSP
         {
             get { return tcDSP; }
-            set { tcDSP = value; }
         }
 
         public TabControl TabAudio
         {
             get { return tcAudio; }
-            set { tcAudio = value; }
         }
 
         public TabControl TabCAT
         {
             get { return tcCAT; }
         }
-
+        public TabControl TabOtherHW
+        {
+            get { return tpApolloAmp; }
+        }
         private bool hl2IOBoardPresent = false;
         public bool HL2IOBoardPresent
         {
@@ -6208,7 +6214,7 @@ namespace Thetis
         // General Tab Event Handlers
         // ======================================================
 
-        private void InitHPSDR()
+        private void initHPSDR()
         {
             if (!initializing)
                 AddHPSDRPages();
@@ -6224,35 +6230,32 @@ namespace Thetis
             grpHPSDRFreqCalDbg.Visible = true;
             grpOzyType.Visible = true;
             grpOzyType.Enabled = true;
-            grpMetisAddr.Visible = true;
 
-            if (HardwareSpecific.Model == HPSDRModel.ANAN200D ||
-                HardwareSpecific.Model == HPSDRModel.ANAN7000D ||
-                HardwareSpecific.Model == HPSDRModel.ANAN8000D ||
-                HardwareSpecific.Model == HPSDRModel.ANAN_G2 ||
-                HardwareSpecific.Model == HPSDRModel.ANAN_G2_1K ||
-                HardwareSpecific.Model == HPSDRModel.ANVELINAPRO3)
-            // note, the RP does not use the ORION box as there is no hw MIC support options
-            // the alex checkbox is moved to the HPSDR groupbox below
-            {
-                grpGeneralHardwareORION.Visible = true;
-                groupBoxHPSDRHW.Visible = false;
-            }
-            else
-            {
-                if (HardwareSpecific.Model == HPSDRModel.ANAN10 ||
-                    HardwareSpecific.Model == HPSDRModel.ANAN10E ||
-                    HardwareSpecific.Model == HPSDRModel.ANAN100 ||
-                    HardwareSpecific.Model == HPSDRModel.ANAN100B)
-                {
-                    groupBoxHPSDRHW.Visible = false;
-                }
-                else
-                {
-                    groupBoxHPSDRHW.Visible = true;
-                }
-                grpGeneralHardwareORION.Visible = false;
-            }
+            //if (HardwareSpecific.Model == HPSDRModel.ANAN200D ||
+            //    HardwareSpecific.Model == HPSDRModel.ANAN7000D ||
+            //    HardwareSpecific.Model == HPSDRModel.ANAN8000D ||
+            //    HardwareSpecific.Model == HPSDRModel.ANAN_G2 ||
+            //    HardwareSpecific.Model == HPSDRModel.ANAN_G2_1K ||
+            //    HardwareSpecific.Model == HPSDRModel.ANVELINAPRO3)
+            //// note, the RP does not use the ORION box as there is no hw MIC support options
+            //// the alex checkbox is moved to the HPSDR groupbox below
+            //{
+            //    groupBoxHPSDRHW.Visible = false;
+            //}
+            //else
+            //{
+            //    if (HardwareSpecific.Model == HPSDRModel.ANAN10 ||
+            //        HardwareSpecific.Model == HPSDRModel.ANAN10E ||
+            //        HardwareSpecific.Model == HPSDRModel.ANAN100 ||
+            //        HardwareSpecific.Model == HPSDRModel.ANAN100B)
+            //    {
+            //        groupBoxHPSDRHW.Visible = false;
+            //    }
+            //    else
+            //    {
+            //        groupBoxHPSDRHW.Visible = true;
+            //    }                
+            //}
 
             if (HardwareSpecific.Model == HPSDRModel.ANAN8000D ||
                 HardwareSpecific.Model == HPSDRModel.ANAN7000D ||
@@ -6263,8 +6266,8 @@ namespace Thetis
             {
                 if (HardwareSpecific.Model == HPSDRModel.REDPITAYA) //DH1KLM
                 {
-                    chkAlexPresent.Parent = groupBoxHPSDRHW;
-                    chkAlexPresent.Location = new Point(43, 120);
+                    //chkAlexPresent.Parent = groupBoxHPSDRHW;
+                    //chkAlexPresent.Location = new Point(43, 120);
                     chkLPFBypass.Visible = true;
                 }
                 else
@@ -6276,17 +6279,17 @@ namespace Thetis
                 chkDisableRXOut.Visible = false;
                 chkBPF2Gnd.Visible = true;
                 chkEnableXVTRHF.Visible = true;
+
+                // mic xlr options for G2 models
                 toolTip1.SetToolTip(chkEXT2OutOnTx, "Enable Rx BYPASS during transmit.");
                 if (HardwareSpecific.Model == HPSDRModel.ANAN_G2 ||
                     HardwareSpecific.Model == HPSDRModel.ANAN_G2_1K)
                 {
-                    panelSaturnMicInput.Visible = true;
-                    lblSaturnMicInput.Visible = true;
+                    panelSaturnMicInput.Enabled = true;
                 }
                 else
                 {
-                    panelSaturnMicInput.Visible = false;
-                    lblSaturnMicInput.Visible = false;
+                    panelSaturnMicInput.Enabled = false;
                 }
             }
             else
@@ -6420,11 +6423,6 @@ namespace Thetis
                 HardwareSpecific.Model != HPSDRModel.ANAN_G2_1K &&
                 HardwareSpecific.Model != HPSDRModel.REDPITAYA)//DH1KLM
             {
-                chkAlexPresent.Parent = groupBoxHPSDRHW;
-                chkAlexPresent.Location = new Point(43, 120);
-                chkApolloPresent.Parent = groupBoxHPSDRHW;
-                chkApolloPresent.Location = new Point(43, 140);
-
                 panelBPFControl.Visible = false;
                 panelAlex1HPFControl.Visible = true;
 
@@ -6504,34 +6502,34 @@ namespace Thetis
                 }
             }
 
-            if (HardwareSpecific.Model == HPSDRModel.HERMES      ||
-               HardwareSpecific.Model == HPSDRModel.ANAN7000D    ||
-               HardwareSpecific.Model == HPSDRModel.ANAN_G2      ||
-               HardwareSpecific.Model == HPSDRModel.ANVELINAPRO3 ||
+            if (HardwareSpecific.Model == HPSDRModel.HERMES || 
+                HardwareSpecific.Model == HPSDRModel.ANAN7000D || HardwareSpecific.Model == HPSDRModel.ANAN8000D ||
+                HardwareSpecific.Model == HPSDRModel.ANVELINAPRO3 || 
+                HardwareSpecific.Model == HPSDRModel.ANAN_G2 || HardwareSpecific.Model == HPSDRModel.ANAN_G2_1K ||
                HardwareSpecific.Model == HPSDRModel.REDPITAYA    || //DH1KLM
                HardwareSpecific.Model == HPSDRModel.HERMESLITE)
             {
-                if (!tcGeneral.TabPages.Contains(tpApolloControl))
+                if (!tcGeneral.TabPages.Contains(tpOtherHW))
                 {
-                    Common.TabControlInsert(tcGeneral, tpApolloControl, 7);
+                    Common.TabControlInsert(tcGeneral, tpOtherHW, 7);
                 }
 
                 else
                 {
-                    if (tcGeneral.TabPages.IndexOf(tpApolloControl) != 7)
+                    if (tcGeneral.TabPages.IndexOf(tpOtherHW) != 7)
                     {
-                        tcGeneral.TabPages.Remove(tpApolloControl);
-                        Common.TabControlInsert(tcGeneral, tpApolloControl, 7);
+                        tcGeneral.TabPages.Remove(tpOtherHW);
+                        Common.TabControlInsert(tcGeneral, tpOtherHW, 7);
                     }
                 }
 
-                if (AndromedaCATEnabled) tpApolloControl.Text = "Andromeda";
+                if (AndromedaCATEnabled) tpOtherHW.Text = "Andromeda";
             }
             else
             {
-                if (tcGeneral.TabPages.Contains(tpApolloControl))
+                if (tcGeneral.TabPages.Contains(tpOtherHW))
                 {
-                    tcGeneral.TabPages.Remove(tpApolloControl);
+                    tcGeneral.TabPages.Remove(tpOtherHW);
                     tcGeneral.SelectedIndex = 0;
                 }
             }
@@ -12235,55 +12233,55 @@ namespace Thetis
         }
         private void txtGenCustomTitle_TextChanged(object sender, System.EventArgs e)
         {
-            if (HPSDRModel.HERMESLITE != HardwareSpecific.Model)
-            {
-                console.CustomTitle = txtGenCustomTitle.Lines[0];
-            }
-            else
-            {   // MI0BOT: Handle multi line box for display of different IP address
-                string remotePort = NetworkIO.EthernetRemotePort == 0 ? "" : ":" + NetworkIO.EthernetRemotePort.ToString();
-                int line = 0;
-                string ipAddress = "";
+            //if (HPSDRModel.HERMESLITE != HardwareSpecific.Model)
+            //{
+            //    console.CustomTitle = txtGenCustomTitle.Lines[0];
+            //}
+            //else
+            //{   // MI0BOT: Handle multi line box for display of different IP address
+            //    string remotePort = NetworkIO.EthernetRemotePort == 0 ? "" : ":" + NetworkIO.EthernetRemotePort.ToString();
+            //    int line = 0;
+            //    string ipAddress = "";
 
-                if (chkEnableStaticIP.Checked)
-                {
-                    if (radStaticIP1.Checked)
-                        line = 1;
-                    else if (radStaticIP2.Checked)
-                        line = 2;
-                    else if (radStaticIP3.Checked)
-                        line = 3;
-                    else if (radStaticIP4.Checked)
-                        line = 4;
+            //    if (chkEnableStaticIP.Checked)
+            //    {
+            //        if (radStaticIP1.Checked)
+            //            line = 1;
+            //        else if (radStaticIP2.Checked)
+            //            line = 2;
+            //        else if (radStaticIP3.Checked)
+            //            line = 3;
+            //        else if (radStaticIP4.Checked)
+            //            line = 4;
 
-                    ipAddress = console.HPSDRNetworkIPAddr;
-                }
-                else
-                {
-                    line = 0;
-                    ipAddress = NetworkIO.HpSdrHwIpAddress.ToString();
-                }
+            //        ipAddress = console.HPSDRNetworkIPAddr;
+            //    }
+            //    else
+            //    {
+            //        line = 0;
+            //        ipAddress = NetworkIO.HpSdrHwIpAddress.ToString();
+            //    }
 
-                if ((txtGenCustomTitle.Lines.Length - 1) < line)
-                    line = 0;
+            //    if ((txtGenCustomTitle.Lines.Length - 1) < line)
+            //        line = 0;
 
-                if (chkDisplayIPPort.Checked)
-                    if (line == 0)
-                        if (txtGenCustomTitle.Lines.Length == 0)
-                            console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Text;
-                        else
-                            console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Lines[0];
-                    else
-                        console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Lines[line] + "   " + txtGenCustomTitle.Lines[0];
-                else
-                    if (line == 0)
-                    if (txtGenCustomTitle.Lines.Length == 0)
-                        console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Text;
-                    else
-                        console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Lines[0];
-                else
-                    console.CustomTitle = txtGenCustomTitle.Lines[line] + "   " + txtGenCustomTitle.Lines[0];
-            }
+            //    if (chkDisplayIPPort.Checked)
+            //        if (line == 0)
+            //            if (txtGenCustomTitle.Lines.Length == 0)
+            //                console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Text;
+            //            else
+            //                console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Lines[0];
+            //        else
+            //            console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Lines[line] + "   " + txtGenCustomTitle.Lines[0];
+            //    else
+            //        if (line == 0)
+            //        if (txtGenCustomTitle.Lines.Length == 0)
+            //            console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Text;
+            //        else
+            //            console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Lines[0];
+            //    else
+            //        console.CustomTitle = txtGenCustomTitle.Lines[line] + "   " + txtGenCustomTitle.Lines[0];
+            //}
         }
 
         private void chkGenAllModeMicPTT_CheckedChanged(object sender, System.EventArgs e)
@@ -14156,55 +14154,6 @@ namespace Thetis
 
         private void tpGeneralHardware_Paint(object sender, System.Windows.Forms.PaintEventArgs e)
         {
-            lblMetisIP.Text = NetworkIO.HpSdrHwIpAddress;
-            lblMetisMAC.Text = NetworkIO.HpSdrHwMacAddress;
-
-            string sProtocolInfo = "Protocol ?";
-            string sMetisCodeVersion = "?.?";
-            string sBoard = "?";
-
-            if (NetworkIO.getHaveSync() == 1)
-            {
-                if (NetworkIO.CurrentRadioProtocol == RadioProtocol.ETH)
-                {
-                    switch (HardwareSpecific.Model)
-                    {
-                        case HPSDRModel.ANAN_G2:
-                        case HPSDRModel.ANAN_G2_1K:
-                            if (NetworkIO.BetaVersion >= 39) // added for p2app v39
-                            {
-                                sMetisCodeVersion = "fpga(v" + NetworkIO.FWCodeVersion.ToString() + ") p2app(v" + NetworkIO.BetaVersion.ToString() + ")";
-                            }
-                            else
-                            {
-                                sMetisCodeVersion = NetworkIO.FWCodeVersion.ToString("0\\.0") + "." + NetworkIO.BetaVersion.ToString();
-                            }
-                            break;
-                        default:
-                            sMetisCodeVersion = NetworkIO.FWCodeVersion.ToString("0\\.0") + "." + NetworkIO.BetaVersion.ToString();
-                            break;
-                    }
-
-                    sProtocolInfo = "Protocol 2 (v" + NetworkIO.ProtocolSupported.ToString("0\\.0") + ")";
-                }
-                else
-                {
-                    sProtocolInfo = "Protocol 1";
-
-                    if(HPSDRModel.HERMESLITE == HardwareSpecific.Model)
-                        sMetisCodeVersion = NetworkIO.FWCodeVersion.ToString("0\\.0") + NetworkIO.FWCodeVersionMinor.ToString("\\.0");
-                    else
-                        sMetisCodeVersion = NetworkIO.FWCodeVersion.ToString("0\\.0");
-                }
-
-                sBoard = NetworkIO.BoardID.ToString();
-            }
-
-            lblProtocolInfo.Text = sProtocolInfo;
-            lblMetisCodeVersion.Text = sMetisCodeVersion;
-            lblMetisBoardID.Text = sBoard;
-
-            return;
         }
 
         //MW0LGE_21g
@@ -14241,9 +14190,9 @@ namespace Thetis
                 else
                 {
                     if(HPSDRModel.HERMESLITE == HardwareSpecific.Model)
-                        sRet = "FW v" + NetworkIO.FWCodeVersion.ToString("0\\.0") + NetworkIO.FWCodeVersionMinor.ToString("\\.0") + " Protocol 1";
+                        sRet = "FW v" + NetworkIO.FWCodeVersion.ToString("0\\.0") + NetworkIO.BetaVersion.ToString("\\.0") + " Protocol 1";
                     else                
-                    sRet = "FW v" + NetworkIO.FWCodeVersion.ToString("0\\.0") + " Protocol_1";
+                        sRet = "FW v" + NetworkIO.FWCodeVersion.ToString("0\\.0") + " Protocol_1";
                 }
             }
 
@@ -15689,14 +15638,6 @@ namespace Thetis
             firmware_bypass = chkFirmwareByp.Checked;
         }
 
-        private void chkFullDiscovery_CheckedChanged(object sender, EventArgs e)
-        {
-            if (initializing) return;
-            if (chkFullDiscovery.Checked) chkEnableStaticIP.Checked = false;
-
-            NetworkIO.FastConnect = chkFullDiscovery.Checked;
-        }
-
         private void chkStrictCharSpacing_CheckedChanged(object sender, EventArgs e)
         {
             if (initializing) return;
@@ -16099,17 +16040,17 @@ namespace Thetis
                     int nRX1ADCinUse = console.GetADCInUse(rx1);
                     int nRX2ADCinUse = console.GetADCInUse(rx2);
 
-                if (HardwareSpecific.HasSteppedAttenuation(2)) // dont bother setting 1 if 2 not present
-                {
-                    if (nRX1ADCinUse == nRX2ADCinUse && chkHermesStepAttenuator.Checked != chkRX2StepAtt.Checked)
+                    if (HardwareSpecific.HasSteppedAttenuation(2)) // dont bother setting 1 if 2 not present
                     {
-                        chkHermesStepAttenuator.Checked = chkRX2StepAtt.Checked;
+                        if (nRX1ADCinUse == nRX2ADCinUse && chkHermesStepAttenuator.Checked != chkRX2StepAtt.Checked)
+                        {
+                            chkHermesStepAttenuator.Checked = chkRX2StepAtt.Checked;
+                        }
+                        else
+                        {
+                            chkHermesStepAttenuator_CheckedChanged(this, EventArgs.Empty);
+                        }
                     }
-                    else
-                    {
-                        chkHermesStepAttenuator_CheckedChanged(this, EventArgs.Empty);
-                    }
-                }
                 }
             }
         }
@@ -16583,96 +16524,6 @@ namespace Thetis
                 console.Midi2Cat.OpenMidi2Cat();
             }
         }
-
-        private void btnSetIPAddr_Click(object sender, EventArgs e)
-        {
-            if (initializing) return;
-            if (radStaticIP1.Checked)
-            {
-                if(HPSDRModel.HERMESLITE != HardwareSpecific.Model)
-                {
-                    console.HPSDRNetworkIPAddr = udStaticIP1.Text + "." + udStaticIP2.Text + "." +
-                                                 udStaticIP3.Text + "." + udStaticIP4.Text;
-                }
-                else
-                {
-                    console.HPSDRNetworkIPAddr = txtIPAddress1.Text;
-                    console.ReduceEthernetBW = chkReduceBW1.Checked;
-
-                    NetworkIO.DiscoveryPort = (int) udDiscoveryPort1.Value;
-                }
-            }
-            if (radStaticIP2.Checked)
-            {
-                if (HPSDRModel.HERMESLITE != HardwareSpecific.Model)
-                {
-                    console.HPSDRNetworkIPAddr = udStaticIP5.Text + "." + udStaticIP6.Text + "." +
-                             udStaticIP7.Text + "." + udStaticIP8.Text;
-                }
-                else
-                {
-                    console.HPSDRNetworkIPAddr = txtIPAddress2.Text;
-                    console.ReduceEthernetBW = chkReduceBW2.Checked;
-
-                    NetworkIO.DiscoveryPort = (int) udDiscoveryPort2.Value;
-                }
-            }
-            if (radStaticIP3.Checked)
-            {
-                if (HPSDRModel.HERMESLITE != HardwareSpecific.Model)
-                {
-                    console.HPSDRNetworkIPAddr = udStaticIP9.Text + "." + udStaticIP10.Text + "." +
-                                                 udStaticIP11.Text + "." + udStaticIP12.Text;
-                }
-                else
-                {
-                    console.HPSDRNetworkIPAddr = txtIPAddress3.Text;
-                    console.ReduceEthernetBW = chkReduceBW3.Checked;
-
-                
-                    NetworkIO.DiscoveryPort = (int) udDiscoveryPort3.Value;
-                }
-            }
-            if (radStaticIP4.Checked)
-            {
-                if (HPSDRModel.HERMESLITE != HardwareSpecific.Model)
-                {
-                    console.HPSDRNetworkIPAddr = udStaticIP13.Text + "." + udStaticIP14.Text + "." +
-                             udStaticIP15.Text + "." + udStaticIP16.Text;
-                }
-                else
-                {
-                    console.HPSDRNetworkIPAddr = txtIPAddress4.Text;
-                    console.ReduceEthernetBW = chkReduceBW4.Checked;
-
-                    NetworkIO.DiscoveryPort = (int) udDiscoveryPort4.Value;
-                }
-            }
-        }
-
-        private void chkEnableStaticIP_CheckedChanged(object sender, EventArgs e)
-        {
-            if (chkEnableStaticIP.Checked)
-            {
-                chkFullDiscovery.Checked = false;
-
-                if (HPSDRModel.HERMESLITE == HardwareSpecific.Model)
-                {
-                    btnSetIPAddr_Click(sender, e);
-                }
-            }
-            else if (HPSDRModel.HERMESLITE == HardwareSpecific.Model)
-            {
-                chkLimit2Subnet.Checked = true;
-                NetworkIO.DiscoveryPort = 1024;
-            }
-
-            NetworkIO.enableStaticIP = chkEnableStaticIP.Checked;
-
-            if (HPSDRModel.HERMESLITE == HardwareSpecific.Model)
-                chkLimit2Subnet.Enabled = chkEnableStaticIP.Checked;
-        }
-
         private void chkRX1WaterfallAGC_CheckedChanged(object sender, EventArgs e)
         {
             if (initializing) return;
@@ -20186,7 +20037,6 @@ namespace Thetis
             tcOptions.Controls.Remove(tpHL2Options);          
 
             groupBoxRXOptions.Text = HardwareSpecific.ModelString + " Options";
-            grpMetisAddr.Text = HardwareSpecific.ModelString + " Address";
             grpHermesStepAttenuator.Text = HardwareSpecific.ModelString + " Step Atten";
 
             console.UpdatePIVisibilty();
@@ -20202,7 +20052,8 @@ namespace Thetis
                 case HPSDRModel.HERMES:
                     chkAlexPresent.Enabled = true;
                     chkApolloPresent.Enabled = true;
-                    chkApolloPresent.Visible = true;
+                    pnlGeneralHardwareORION.Enabled = false;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20232,6 +20083,7 @@ namespace Thetis
                 case HPSDRModel.HERMESLITE:         // MI0BOT: HL2
                     HardwareSpecific.Model = HPSDRModel.HERMESLITE;
                     tcOptions.Controls.Add(tpHL2Options);
+                    pnlGeneralHardwareORION.Enabled = false;
                     chkAlexPresent.Enabled = true;
                     chkAlexPresent.Visible = false;
                     chkApolloPresent.Enabled = true;
@@ -20246,7 +20098,6 @@ namespace Thetis
                     udHermesStepAttenuatorDataRX2.Minimum = (decimal)-28;
                     udHermesStepAttenuatorData.Maximum = 31;
                     udHermesStepAttenuatorDataRX2.Maximum = 31;
-                    grpMetisAddr.Text = "Hermes Lite Address";
                     chkAutoPACalibrate.Checked = false;
                     chkAutoPACalibrate.Visible = false;
                     labelRXAntControl.Text = "  RX1   RX2    XVTR";
@@ -20265,7 +20116,7 @@ namespace Thetis
                     chkMercDither.Enabled = false;
                     chkMercRandom.Enabled = false;
                     udMaxFreq.Value = (Decimal) 38.4;
-                    tpApolloControl.Text = "PA Control";
+                    tpOtherHW.Text = "PA Control";
                     chkApolloFilter.Text = "Enable Full Duplex";
                     chkApolloTuner.Text = "Enable PA";
                     grpApolloCtrl.Text = "PA Control";
@@ -20276,12 +20127,6 @@ namespace Thetis
                     tpAlexControl.Text = "Ant/Filters";
                     comboAudioSampleRateRX2.Enabled = false;
                     ucIOPinsLedStripHF.DisplayBits = 6;
-                    radRadioProtocol1Select.Checked = true;
-                    radRadioProtocol2Select.Checked = false;
-                    radRadioProtocolAutoSelect.Checked = false;
-                    radRadioProtocol1Select.Enabled = false;
-                    radRadioProtocol2Select.Enabled = false;
-                    radRadioProtocolAutoSelect.Enabled = false;
                     toolTip1.SetToolTip(chkHERCULES, "Preset pins for for N2ADR filter board");
                     toolTip1.SetToolTip(chkApolloFilter, "Enables the full duplex on the HL2");
                     toolTip1.SetToolTip(chkApolloTuner, "Enables HL2 power amplifier");
@@ -20380,70 +20225,6 @@ namespace Thetis
                     chkCATtoVFOB.Enabled = true;
                     chkCATtoVFOB.Visible = true;
 
-                    chkLimit2Subnet.Visible = true;
-
-                    chkDisplayIPPort.Enabled = true;
-                    chkDisplayIPPort.Visible = true;
-                    udDiscoveryPort1.Enabled = true;
-                    udDiscoveryPort1.Visible = true;
-                    udDiscoveryPort2.Enabled = true;
-                    udDiscoveryPort2.Visible = true;
-                    udDiscoveryPort3.Enabled = true;
-                    udDiscoveryPort3.Visible = true;
-                    udDiscoveryPort4.Enabled = true;
-                    udDiscoveryPort4.Visible = true;
-
-                    txtIPAddress1.Enabled = true;
-                    txtIPAddress1.Visible = true;
-                    txtIPAddress2.Enabled = true;
-                    txtIPAddress2.Visible = true;
-                    txtIPAddress3.Enabled = true;
-                    txtIPAddress3.Visible = true;
-                    txtIPAddress4.Enabled = true;
-                    txtIPAddress4.Visible = true;
-
-                    chkReduceBW1.Visible = true;
-                    chkReduceBW1.Enabled = true;
-                    chkReduceBW2.Visible = true;
-                    chkReduceBW2.Enabled = true;
-                    chkReduceBW3.Visible = true;
-                    chkReduceBW3.Enabled = true;
-                    chkReduceBW4.Visible = true;
-                    chkReduceBW4.Enabled = true;
-
-                    udStaticIP1.Enabled = false;
-                    udStaticIP1.Visible = false;
-                    udStaticIP2.Enabled = false;
-                    udStaticIP2.Visible = false;
-                    udStaticIP3.Enabled = false;
-                    udStaticIP3.Visible = false;
-                    udStaticIP4.Enabled = false;
-                    udStaticIP4.Visible = false;
-                    udStaticIP5.Enabled = false;
-                    udStaticIP5.Visible = false;
-                    udStaticIP6.Enabled = false;
-                    udStaticIP6.Visible = false;
-                    udStaticIP7.Enabled = false;
-                    udStaticIP7.Visible = false;
-                    udStaticIP8.Enabled = false;
-                    udStaticIP8.Visible = false;
-                    udStaticIP9.Enabled = false;
-                    udStaticIP9.Visible = false;
-                    udStaticIP10.Enabled = false;
-                    udStaticIP10.Visible = false;
-                    udStaticIP11.Enabled = false;
-                    udStaticIP11.Visible = false;
-                    udStaticIP12.Enabled = false;
-                    udStaticIP12.Visible = false;
-                    udStaticIP13.Enabled = false;
-                    udStaticIP13.Visible = false;
-                    udStaticIP14.Enabled = false;
-                    udStaticIP14.Visible = false;
-                    udStaticIP15.Enabled = false;
-                    udStaticIP15.Visible = false;
-                    udStaticIP16.Enabled = false;
-                    udStaticIP16.Visible = false;
-
                     txtGenCustomTitle.MaxLength = 100;
                     txtGenCustomTitle.Multiline = true;
                     txtGenCustomTitle.WordWrap = false;
@@ -20499,9 +20280,10 @@ namespace Thetis
                 case HPSDRModel.ANAN10:
                     chkAlexPresent.Checked = true;
                     chkAlexPresent.Enabled = false;
-                    chkApolloPresent.Visible = false;
                     chkApolloPresent.Enabled = false;
                     chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = false;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20529,15 +20311,16 @@ namespace Thetis
                     break;
 
                 case HPSDRModel.ANAN10E:
+                    chkAlexPresent.Checked = true;
+                    chkAlexPresent.Enabled = false;
+                    chkApolloPresent.Enabled = false;
+                    chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = false;
+
                     // set RX2 sample_rate equal to RX1 rate
                     comboAudioSampleRateRX2.SelectedIndex = comboAudioSampleRate1.SelectedIndex;
                     comboAudioSampleRateRX2_SelectedIndexChanged(this, e);
                     comboAudioSampleRateRX2.Enabled = false;
-                    chkAlexPresent.Checked = true;
-                    chkAlexPresent.Enabled = false;
-                    chkApolloPresent.Visible = false;
-                    chkApolloPresent.Enabled = false;
-                    chkApolloPresent.Checked = false;
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20567,9 +20350,10 @@ namespace Thetis
                 case HPSDRModel.ANAN100:
                     chkAlexPresent.Checked = true;
                     chkAlexPresent.Enabled = true;
-                    chkApolloPresent.Visible = false;
                     chkApolloPresent.Enabled = false;
                     chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = false;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20599,14 +20383,15 @@ namespace Thetis
                     break;
 
                 case HPSDRModel.ANAN100B:
+                    chkAlexPresent.Checked = true;
+                    chkAlexPresent.Enabled = false;
+                    chkApolloPresent.Enabled = false;
+                    chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = false;
+
                     comboAudioSampleRateRX2.SelectedIndex = comboAudioSampleRate1.SelectedIndex;
                     comboAudioSampleRateRX2_SelectedIndexChanged(this, e);
                     comboAudioSampleRateRX2.Enabled = false;
-                    chkAlexPresent.Checked = true;
-                    chkAlexPresent.Enabled = false;
-                    chkApolloPresent.Visible = false;
-                    chkApolloPresent.Enabled = false;
-                    chkApolloPresent.Checked = false;
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20636,10 +20421,12 @@ namespace Thetis
                     break;
 
                 case HPSDRModel.ANAN100D:
+                    chkAlexPresent.Checked = true;
                     chkAlexPresent.Enabled = true;
-                    chkApolloPresent.Visible = false;
                     chkApolloPresent.Enabled = false;
                     chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = false;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20684,9 +20471,12 @@ namespace Thetis
                     break;
 
                 case HPSDRModel.ANAN200D:
-                    chkApolloPresent.Visible = false;
+                    chkAlexPresent.Checked = true;
+                    chkAlexPresent.Enabled = true;
                     chkApolloPresent.Enabled = false;
                     chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = true;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20708,8 +20498,6 @@ namespace Thetis
                     chkEXT1OutOnTx.Text = "Ext 1 on Tx";
                     chkEXT2OutOnTx.Text = "Ext 2 on Tx";
                     chkEXT2OutOnTx.Visible = true;
-                    chkAlexPresent.Parent = grpGeneralHardwareORION;
-                    chkAlexPresent.Location = new Point(43, 120);
                     radDDC0ADC2.Enabled = true;
                     radDDC1ADC2.Enabled = true;
                     radDDC2ADC2.Enabled = true;
@@ -20724,10 +20512,12 @@ namespace Thetis
                     break;
 
                 case HPSDRModel.ANAN7000D:
+                    chkAlexPresent.Checked = true;
                     chkAlexPresent.Enabled = true;
-                    chkApolloPresent.Visible = false;
                     chkApolloPresent.Enabled = false;
                     chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = true;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20747,10 +20537,6 @@ namespace Thetis
                     chkRX2StepAtt_CheckedChanged(this, EventArgs.Empty);
                     chkEXT1OutOnTx.Text = "Ext 1 on Tx";
                     chkEXT2OutOnTx.Text = "Rx BYPASS on Tx";
-                    chkAlexPresent.Parent = grpGeneralHardwareORION;
-                    chkAlexPresent.Location = new Point(43, 120);
-                    chkApolloPresent.Parent = grpGeneralHardwareORION;
-                    chkApolloPresent.Location = new Point(43, 140);
                     panelAlex1HPFControl.Visible = false;
                     panelBPFControl.Visible = true;
                     chkDisable6mLNAonRX.Parent = panelBPFControl;
@@ -20777,10 +20563,12 @@ namespace Thetis
                     break;
 
                 case HPSDRModel.ANAN8000D:
+                    chkAlexPresent.Checked = true;
                     chkAlexPresent.Enabled = true;
-                    chkApolloPresent.Visible = false;
                     chkApolloPresent.Enabled = false;
                     chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = true;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20801,10 +20589,6 @@ namespace Thetis
                     chkRxOutOnTx.Text = "BYPASS on Tx";
                     chkEXT1OutOnTx.Text = "Ext 1 on Tx";
                     chkEXT2OutOnTx.Visible = false;
-                    chkAlexPresent.Parent = grpGeneralHardwareORION;
-                    chkAlexPresent.Location = new Point(43, 120);
-                    chkApolloPresent.Parent = grpGeneralHardwareORION;
-                    chkApolloPresent.Location = new Point(43, 140);
                     panelAlex1HPFControl.Visible = false;
                     panelBPFControl.Visible = true;
                     chkDisable6mLNAonRX.Parent = panelBPFControl;
@@ -20833,10 +20617,12 @@ namespace Thetis
                     break;
 
                 case HPSDRModel.ANAN_G2:                 // added G8NJJ
+                    chkAlexPresent.Checked = true;
                     chkAlexPresent.Enabled = true;
-                    chkApolloPresent.Visible = false;
                     chkApolloPresent.Enabled = false;
                     chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = true;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20856,10 +20642,6 @@ namespace Thetis
                     chkRX2StepAtt_CheckedChanged(this, EventArgs.Empty);
                     chkEXT1OutOnTx.Text = "Ext 1 on Tx";
                     chkEXT2OutOnTx.Text = "Rx BYPASS on Tx";
-                    chkAlexPresent.Parent = grpGeneralHardwareORION;
-                    chkAlexPresent.Location = new Point(43, 120);
-                    chkApolloPresent.Parent = grpGeneralHardwareORION;
-                    chkApolloPresent.Location = new Point(43, 140);
                     panelAlex1HPFControl.Visible = false;
                     panelBPFControl.Visible = true;
                     chkDisable6mLNAonRX.Parent = panelBPFControl;
@@ -20886,10 +20668,12 @@ namespace Thetis
                     break;
 
                 case HPSDRModel.ANAN_G2_1K:              // added G8NJJ
+                    chkAlexPresent.Checked = true;
                     chkAlexPresent.Enabled = true;
-                    chkApolloPresent.Visible = false;
                     chkApolloPresent.Enabled = false;
                     chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = true;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20909,10 +20693,6 @@ namespace Thetis
                     chkRX2StepAtt_CheckedChanged(this, EventArgs.Empty);
                     chkEXT1OutOnTx.Text = "Ext 1 on Tx";
                     chkEXT2OutOnTx.Text = "Rx BYPASS on Tx";
-                    chkAlexPresent.Parent = grpGeneralHardwareORION;
-                    chkAlexPresent.Location = new Point(43, 120);
-                    chkApolloPresent.Parent = grpGeneralHardwareORION;
-                    chkApolloPresent.Location = new Point(43, 140);
                     panelAlex1HPFControl.Visible = false;
                     panelBPFControl.Visible = true;
                     chkDisable6mLNAonRX.Parent = panelBPFControl;
@@ -20939,10 +20719,12 @@ namespace Thetis
                     break;
 
                 case HPSDRModel.ANVELINAPRO3:
+                    chkAlexPresent.Checked = true;
                     chkAlexPresent.Enabled = true;
-                    chkApolloPresent.Visible = false;
                     chkApolloPresent.Enabled = false;
                     chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = true;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -20962,10 +20744,6 @@ namespace Thetis
                     chkRX2StepAtt_CheckedChanged(this, EventArgs.Empty);
                     chkEXT1OutOnTx.Text = "Ext 1 on Tx";
                     chkEXT2OutOnTx.Text = "Rx BYPASS on Tx";
-                    chkAlexPresent.Parent = grpGeneralHardwareORION;
-                    chkAlexPresent.Location = new Point(43, 120);
-                    chkApolloPresent.Parent = grpGeneralHardwareORION;
-                    chkApolloPresent.Location = new Point(43, 140);
                     panelAlex1HPFControl.Visible = false;
                     panelBPFControl.Visible = true;
                     chkDisable6mLNAonRX.Parent = panelBPFControl;
@@ -20992,10 +20770,12 @@ namespace Thetis
                     break;
 
                 case HPSDRModel.REDPITAYA: //DH1KLM
+                    chkAlexPresent.Checked = true;
                     chkAlexPresent.Enabled = true;
-                    chkApolloPresent.Visible = false;
                     chkApolloPresent.Enabled = false;
                     chkApolloPresent.Checked = false;
+                    pnlGeneralHardwareORION.Enabled = false;
+
                     chkGeneralRXOnly.Visible = true;
                     chkHermesStepAttenuator.Enabled = true;
                     udHermesStepAttenuatorData.Enabled = true;
@@ -21015,10 +20795,6 @@ namespace Thetis
                     chkRX2StepAtt_CheckedChanged(this, EventArgs.Empty);
                     chkEXT1OutOnTx.Text = "Ext 1 on Tx";
                     chkEXT2OutOnTx.Text = "Rx BYPASS on Tx";
-                    chkAlexPresent.Parent = grpGeneralHardwareORION;
-                    chkAlexPresent.Location = new Point(43, 120);
-                    chkApolloPresent.Parent = grpGeneralHardwareORION;
-                    chkApolloPresent.Location = new Point(43, 140);
                     panelAlex1HPFControl.Visible = false;
                     panelBPFControl.Visible = true;
                     chkDisable6mLNAonRX.Parent = panelBPFControl;
@@ -21065,7 +20841,7 @@ namespace Thetis
             int index = comboPAProfile.Items.IndexOf(sCurrentPAProfile);
             if (index != -1) comboPAProfile.SelectedIndex = index;
 
-            InitHPSDR();
+            initHPSDR();
 
             if (power)
             {
@@ -21086,41 +20862,6 @@ namespace Thetis
             // Switch off and hide HL2 options
             chkCATtoVFOB.Enabled = false;
             chkCATtoVFOB.Visible = false;
-
-            chkLimit2Subnet.Checked = true;
-            chkLimit2Subnet.Enabled = false;
-            chkLimit2Subnet.Visible = false;
-
-            chkReduceBW1.Checked = false;
-            chkReduceBW1.Enabled = false;
-            chkReduceBW1.Visible = false;
-            chkReduceBW2.Checked = false;
-            chkReduceBW2.Enabled = false;
-            chkReduceBW2.Visible = false;
-            chkReduceBW3.Checked = false;
-            chkReduceBW3.Enabled = false;
-            chkReduceBW3.Visible = false;
-            chkReduceBW4.Checked = false;
-            chkReduceBW4.Enabled = false;
-            chkReduceBW4.Visible = false;
-
-            udDiscoveryPort1.Value = 1024;
-            udDiscoveryPort1.Enabled = false;
-            udDiscoveryPort1.Visible = false;
-            udDiscoveryPort2.Value = 1024;
-            udDiscoveryPort2.Enabled = false;
-            udDiscoveryPort2.Visible = false;
-            udDiscoveryPort3.Value = 1024;
-            udDiscoveryPort3.Enabled = false;
-            udDiscoveryPort3.Visible = false;
-            udDiscoveryPort4.Value = 1024;
-            udDiscoveryPort4.Enabled = false;
-            udDiscoveryPort4.Visible = false;
-
-            txtIPAddress1.SendToBack();
-            txtIPAddress2.SendToBack();
-            txtIPAddress3.SendToBack();
-            txtIPAddress4.SendToBack();
         }
         private void setupADCRadioButtions()
         {
@@ -21192,7 +20933,8 @@ namespace Thetis
             OPTIONS2_Tab,
             OPTIONS3_Tab,
             PA_Tab,
-            HWSET_Tab
+            HWSET_Tab,
+            OtherHW_PA_Tab
         }
         public void ShowSetupTab(SetupTab eTab)
         {
@@ -21293,6 +21035,12 @@ namespace Thetis
                 case SetupTab.PA_Tab:
                     TabSetup.SelectedIndex = 5; // pa
                     TabPowerAmplifier.SelectedIndex = 0; // gains
+                    break;
+                case SetupTab.OtherHW_PA_Tab:
+                    if (!tcGeneral.TabPages.Contains(tpOtherHW)) return;
+                    TabSetup.SelectedIndex = TabSetup.TabPages.IndexOf(tpGeneral); //general
+                    TabGeneral.SelectedIndex = TabGeneral.TabPages.IndexOf(tpOtherHW); //Other H/W tab
+                    TabOtherHW.SelectedIndex = TabOtherHW.TabPages.IndexOf(tpOtherHW_amp); //PA tab
                     break;
             }
         }
@@ -21923,18 +21671,6 @@ namespace Thetis
             toolTip1.SetToolTip(lgLinearGradientRX1, e.DBM.ToString());
         }
 
-        private void tmrPLLLockChecker_Tick(object sender, EventArgs e)
-        {
-            if (NetworkIO.CurrentRadioProtocol == RadioProtocol.ETH && NetworkIO.getHaveSync() == 1)
-            {
-                lblPLLLock.Text = NetworkIO.GetPLLLock() ? "PLL Locked" : "PLL Not Locked";
-            }
-            else
-            {
-                lblPLLLock.Text = "";
-            }
-        }
-
         private void comboFRSRegion_MouseEnter(object sender, EventArgs e)
         {
             showRegionBandstackWarning(true);
@@ -21945,11 +21681,11 @@ namespace Thetis
             picWarningRegionExtended.Visible = bShow;
             if (bShow)
             {
-                grpFRSRegion.Size = new Size(150, 136);
+                grpFRSRegion.Size = new Size(160, 136);
             }
             else
             {
-                grpFRSRegion.Size = new Size(150, 75);
+                grpFRSRegion.Size = new Size(160, 74);
             }
         }
 
@@ -22077,7 +21813,7 @@ namespace Thetis
         public void UpdateDDCTab()
         {
             // if we are connected, use current, else use selected
-            RadioProtocol protocol = NetworkIO.getHaveSync() == 1 ? NetworkIO.CurrentRadioProtocol : NetworkIO.RadioProtocolSelected;
+            RadioProtocol protocol = NetworkIO.getHaveSync() == 1 ? NetworkIO.CurrentRadioProtocol : NetworkIO.SelectedRadioProtocol;
             switch (protocol)
             {
                 case RadioProtocol.USB: //p1
@@ -28146,37 +27882,13 @@ namespace Thetis
         
         private void chkLimit2Subnet_CheckedChanged(object sender, EventArgs e)
         {
-            NetworkIO.enableLimitSubnet = chkLimit2Subnet.Checked;
+//            NetworkIO.enableLimitSubnet = chkLimit2Subnet.Checked;
         }
 
         private void chkDisplayIPPort_CheckedChanged(object sender, EventArgs e)
         {
             txtGenCustomTitle_TextChanged(sender, e);
         }
-        private void txtIPAddress1_MouseHover(object sender, EventArgs e)
-        {
-            if (txtGenCustomTitle.Lines.Length > 1)
-                toolTip1.SetToolTip(txtIPAddress1, txtGenCustomTitle.Lines[1]);
-        }
-
-        private void txtIPAddress2_MouseHover(object sender, EventArgs e)
-        {
-            if (txtGenCustomTitle.Lines.Length > 2)
-                toolTip1.SetToolTip(txtIPAddress2, txtGenCustomTitle.Lines[2]);
-        }
-
-        private void txtIPAddress3_MouseHover(object sender, EventArgs e)
-        {
-            if (txtGenCustomTitle.Lines.Length > 3)
-                toolTip1.SetToolTip(txtIPAddress3, txtGenCustomTitle.Lines[3]);
-        }
-
-        private void txtIPAddress4_MouseHover(object sender, EventArgs e)
-        {
-            if (txtGenCustomTitle.Lines.Length > 4)
-                toolTip1.SetToolTip(txtIPAddress4, txtGenCustomTitle.Lines[4]);
-        }
-
         private void txtGenCustomTitle_MouseEnter(object sender, EventArgs e)
         {
             grpGenCustomTitleText.Height *= 2;
@@ -29410,34 +29122,34 @@ namespace Thetis
             Display.NoiseFloorColorText = clrbtnNoiseFloorText.Color;
         }
 
-        private void radRadioProtocolSelect_CheckedChanged(object sender, EventArgs e)
-        {
-            if (initializing) return;
-            //note: all 3 radio buttons for radio protocol call this on change
+        //private void radRadioProtocolSelect_CheckedChanged(object sender, EventArgs e)
+        //{
+        //    if (initializing) return;
+        //    //note: all 3 radio buttons for radio protocol call this on change
 
-            if (radRadioProtocol1Select.Checked)
-            {
-                NetworkIO.RadioProtocolSelected = RadioProtocol.USB;
-            }
-            else if (radRadioProtocol2Select.Checked)
-            {
-                NetworkIO.RadioProtocolSelected = RadioProtocol.ETH;
-            }
-            else if (radRadioProtocolAutoSelect.Checked)
-            {
-                NetworkIO.RadioProtocolSelected = RadioProtocol.Auto;
-            }
-            else
-            {
-                //default to auto
-                radRadioProtocolAutoSelect.Checked = true;
-                return;
-            }
+        //    if (radRadioProtocol1Select.Checked)
+        //    {
+        //        NetworkIO.RadioProtocolSelected = RadioProtocol.USB;
+        //    }
+        //    else if (radRadioProtocol2Select.Checked)
+        //    {
+        //        NetworkIO.RadioProtocolSelected = RadioProtocol.ETH;
+        //    }
+        //    else if (radRadioProtocolAutoSelect.Checked)
+        //    {
+        //        NetworkIO.RadioProtocolSelected = RadioProtocol.Auto;
+        //    }
+        //    else
+        //    {
+        //        //default to auto
+        //        radRadioProtocolAutoSelect.Checked = true;
+        //        return;
+        //    }
 
-            UpdateDDCTab();
+        //    UpdateDDCTab();
 
-            InitAudioTab();
-        }
+        //    InitAudioTab();
+        //}
 
         //[2.10.3.5]W4WMT implements #87
         private void chkMICVOXAllowBypass_CheckedChanged(object sender, EventArgs e)
@@ -36505,6 +36217,605 @@ namespace Thetis
         private void pbCMasio_InOut_Info_Click(object sender, EventArgs e)
         {
             toolTip1.Show(toolTip1.GetToolTip(pbCMasio_InOut_Info), pbCMasio_InOut_Info, 6 * 1000);
+        }
+
+        //
+        private RadioDiscoveryOptions getRadioDiscoveryOptions(bool nics_only = false)
+        {
+            RadioDiscoveryOptions options = new RadioDiscoveryOptions();
+            options.IgnoreSubnetCheck = chkAnySubnet.Checked;
+            options.IncludeEthernet = true;
+            options.IncludeWireless = true;
+            options.IncludeOtherInterfaceTypes = !LimitInterfacesToEthernetWifi;
+            options.AllowLoopback = false;
+            options.AllowAPIPA = true;
+            options.IncludeGeneralBroadcast = true;
+
+            options.DiscoveryPortBase = 1024; // overwritten in applyAnyOrSpecificRadio
+            
+            options.BindLocalPort = this.ListenToRadioOnUDPPort;
+
+            ScanPerformanceProfile profile = ScanPerformanceProfile.Fast;
+
+            object selected = comboDiscoverSpeedProfile.SelectedItem;
+            if (selected is ScanPerformanceProfile)
+            {
+                profile = (ScanPerformanceProfile)selected;
+            }
+            options.ScanPerformance = profile;
+
+            options.ProtocolMode = RadioDiscoveryProtocolMode.Auto;
+            options.FixedTargetIp = null;
+            options.FixedLocalIp = null;
+
+            if (nics_only) return options;
+            if(applyAnyOrSpecificRadio(options)) return options;            
+            return null;
+        }
+
+        public int ListenToRadioOnUDPPort
+        {
+            get
+            {
+                if (radDefaultListenPort == null) return 0;
+                return radDefaultListenPort.Checked ? 0 : (int)nudUserListenPort.Value;
+            }
+        }
+        public bool NetworkProtocolMustMatch
+        {
+            get
+            {
+                if (chkNetworkProtocolMustMatch == null) return false;
+                return chkNetworkProtocolMustMatch.Checked;
+            }
+        }
+        private void setupNeworking()
+        {
+            comboDiscoverSpeedProfile.DataSource = null;
+            comboDiscoverSpeedProfile.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboDiscoverSpeedProfile.DataSource = Enum.GetValues(typeof(ScanPerformanceProfile));
+            comboDiscoverSpeedProfile.SelectedItem = ScanPerformanceProfile.Fast;
+
+            rebuildNicCombo();
+        }
+        private void rebuildNicCombo()
+        {
+            IPAddress previous = null;
+
+            NicRadioScanResult selected = comboNICS.SelectedItem as NicRadioScanResult;
+            if (selected != null)
+            {
+                previous = selected.LocalIPv4;
+            }
+
+            RadioDiscoveryOptions options = getRadioDiscoveryOptions(true);
+            options.ScanPerformance = ScanPerformanceProfile.UltraFast;
+            options.FixedTargetIp = null;
+            options.FixedLocalIp = null;
+            RadioDiscoveryService svc = new RadioDiscoveryService();
+            List<NicRadioScanResult> nics = svc.ListUsableNics(options);
+
+            comboNICS.DataSource = null;
+            comboNICS.DisplayMember = "DisplayText";
+            comboNICS.ValueMember = "LocalIPv4";
+            comboNICS.DataSource = nics;
+
+            if (previous != null && nics != null)
+            {
+                for (int i = 0; i < nics.Count; i++)
+                {
+                    if (nics[i].LocalIPv4 != null && nics[i].LocalIPv4.Equals(previous))
+                    {
+                        comboNICS.SelectedIndex = i;
+                        return;
+                    }
+                }
+            }
+        }
+        private bool applyAnyOrSpecificRadio(RadioDiscoveryOptions options)
+        {
+            if (options == null)
+            {
+                return false;
+            }
+
+            if (radAnyRadio.Checked)
+            {
+                options.FixedTargetIp = null;
+                return true;
+            }
+
+            if (radSpecificRadio.Checked)
+            {
+                IPAddress ip;
+                int port;
+                if (!tryParseIpPort(txtSpecificRadio.Text, options.DiscoveryPortBase, out ip, out port))
+                {
+                    // "Invalid IP/host/URL. Examples: 192.168.0.155:1024 or myradio.local:1024 or http://myradio.local:1024";
+                    return false;
+                }
+
+                options.FixedTargetIp = ip;
+                options.DiscoveryPortBase = port;
+                return true;
+            }
+
+            options.FixedTargetIp = null;
+            return true;
+        }
+        private bool tryParseIpPort(string text, int defaultPort, out IPAddress ip, out int port)
+        {
+            ip = null;
+            port = 0;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            string s = text.Trim();
+
+            if (Uri.TryCreate(s, UriKind.Absolute, out Uri uri) && !string.IsNullOrWhiteSpace(uri.Host))
+            {
+                int p = uri.Port > 0 ? uri.Port : defaultPort;
+                return tryResolveHostToIPv4(uri.Host, p, out ip, out port);
+            }
+
+            if (Uri.TryCreate("udp://" + s, UriKind.Absolute, out Uri uri2) && !string.IsNullOrWhiteSpace(uri2.Host))
+            {
+                int p = uri2.Port > 0 ? uri2.Port : defaultPort;
+                return tryResolveHostToIPv4(uri2.Host, p, out ip, out port);
+            }
+
+            int idx = s.LastIndexOf(':');
+            if (idx > 0)
+            {
+                string hostPart = s.Substring(0, idx).Trim();
+                string portPart = s.Substring(idx + 1).Trim();
+
+                if (!int.TryParse(portPart, out int p))
+                {
+                    return false;
+                }
+
+                if (p < 1024 || p > 65535)
+                {
+                    return false;
+                }
+
+                return tryResolveHostToIPv4(hostPart, p, out ip, out port);
+            }
+
+            return tryResolveHostToIPv4(s, defaultPort, out ip, out port);
+        }
+        private bool tryResolveHostToIPv4(string host, int p, out IPAddress ip, out int port)
+        {
+            ip = null;
+            port = 0;
+
+            if (string.IsNullOrWhiteSpace(host))
+            {
+                return false;
+            }
+
+            string h = host.Trim();
+
+            if (IPAddress.TryParse(h, out IPAddress parsedIp))
+            {
+                ip = parsedIp;
+                port = p;
+                return true;
+            }
+
+            if (!looksLikeHostname(h))
+            {
+                return false;
+            }
+
+            try
+            {
+                IPAddress[] addresses = Dns.GetHostAddresses(h);
+                for (int i = 0; i < addresses.Length; i++)
+                {
+                    if (addresses[i].AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        ip = addresses[i];
+                        port = p;
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
+            return false;
+        }
+
+        private bool looksLikeHostname(string host)
+        {
+            if (string.IsNullOrWhiteSpace(host))
+            {
+                return false;
+            }
+
+            string s = host.Trim();
+
+            if (s.Length < 1 || s.Length > 253)
+            {
+                return false;
+            }
+
+            if (s.StartsWith(".", StringComparison.Ordinal) || s.EndsWith(".", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            bool hasLetter = false;
+
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+
+                bool ok = (c >= 'a' && c <= 'z') ||
+                          (c >= 'A' && c <= 'Z') ||
+                          (c >= '0' && c <= '9') ||
+                          c == '-' || c == '.';
+
+                if (!ok)
+                {
+                    return false;
+                }
+
+                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+                {
+                    hasLetter = true;
+                }
+            }
+
+            if (s.IndexOf('.') < 0 && !hasLetter)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool tryDiscoverRadios(out List<NicRadioScanResult> discovered, bool showNoRadiosMessage)
+        {
+            Cursor cursor = this.Cursor;
+            this.Cursor = Cursors.WaitCursor;
+
+            discovered = null;
+
+            try
+            {
+                RadioDiscoveryOptions options = getRadioDiscoveryOptions();
+                if (options == null)
+                {
+                    MessageBox.Show(this, "Invalid IP/Url.",
+                        "Invalid",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, Common.MB_TOPMOST);
+                    return false;
+                }
+
+                RadioDiscoveryService svc = new RadioDiscoveryService();
+
+                if (radViaAllNics.Checked)
+                {
+                    options.FixedLocalIp = null;
+                    discovered = svc.DiscoverUsingAllNics(options);
+                }
+                else if (radViaSpecificNic.Checked)
+                {
+                    NicRadioScanResult selectedNic = comboNICS.SelectedItem as NicRadioScanResult;
+                    if (selectedNic == null) return false;
+
+                    IPAddress localIp = selectedNic.LocalIPv4;
+                    if (localIp == null) return false;
+
+                    NicRadioScanResult result = svc.DiscoverUsingSingleNic(options, localIp);
+
+                    discovered = new List<NicRadioScanResult>();
+                    if (result != null) discovered.Add(result);
+                }
+            }
+            finally
+            {
+                this.Cursor = cursor;
+            }
+
+            if (discovered == null || discovered.Count < 1)
+            {
+                MessageBox.Show(this, "No NICs available.",
+                    "Discovery complete",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, Common.MB_TOPMOST);
+                return false;
+            }
+
+            bool socketError = false;
+            for (int i = 0; i < discovered.Count; i++)
+            {
+                NicRadioScanResult sr = discovered[i];
+                if (sr != null && sr.Diagnostics != null && sr.Diagnostics.SocketError)
+                {
+                    socketError = true;
+                    break;
+                }
+            }
+
+            bool radiosFound = false;
+            for (int i = 0; i < discovered.Count; i++)
+            {
+                NicRadioScanResult sr = discovered[i];
+                if (sr != null && sr.Radios != null && sr.Radios.Count > 0)
+                {
+                    radiosFound = true;
+                    break;
+                }
+            }
+
+            if (!radiosFound)
+            {
+                if (socketError)
+                {
+                    MessageBox.Show(this, "Socket error. Already in use.",
+                        "Discovery complete",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, Common.MB_TOPMOST);
+                }
+                else if (showNoRadiosMessage)
+                {
+                    MessageBox.Show(this, "No Radio(s) found.",
+                        "Discovery complete",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, Common.MB_TOPMOST);
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private void btnDiscoverRadios_Click(object sender, EventArgs e)
+        {
+            List<NicRadioScanResult> discovered;
+            if (!tryDiscoverRadios(out discovered, true)) return;
+
+            clsDiscoveredRadioPicker picker = new clsDiscoveredRadioPicker();
+            List<NicRadioScanResult> selectedRadios = picker.PickRadios(this, discovered);
+
+            if (selectedRadios == null) return;
+
+            for (int n = 0; n < selectedRadios.Count; n++)
+            {
+                NicRadioScanResult nic = selectedRadios[n];
+                if (nic == null) continue;
+
+                List<RadioInfo> radios = nic.Radios;
+                if (radios == null || radios.Count < 1) continue;
+
+                for (int r = 0; r < radios.Count; r++)
+                {
+                    RadioInfo radio = radios[r];
+                    if (radio == null) continue;
+
+                    ucRadioList_Radios.AddRadio(nic, radio);
+                }
+            }
+        }
+
+        public bool ScanForFirstFoundRadio()
+        {
+            List<NicRadioScanResult> discovered;
+            if (!tryDiscoverRadios(out discovered, false)) return false;
+
+            for (int i = 0; i < discovered.Count; i++)
+            {
+                NicRadioScanResult nic = discovered[i];
+                if (nic == null) continue;
+
+                List<RadioInfo> radios = nic.Radios;
+                if (radios == null || radios.Count < 1) continue;
+
+                RadioInfo radio = radios[0];
+                if (radio == null) continue;
+
+                ucRadioList_Radios.UpdateSelectedDetails(nic, radio);
+                return true;
+            }
+
+            return false;
+        }        
+
+        private void btnRefreshNics_Click(object sender, EventArgs e)
+        {
+            rebuildNicCombo();
+        }
+
+        private void radViaNics_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+
+            if (radViaAllNics.Checked)
+            {
+                comboNICS.Enabled = false;
+                btnRefreshNics.Enabled = false;
+            }
+            else if (radViaSpecificNic.Checked)
+            {
+                comboNICS.Enabled = true;
+                btnRefreshNics.Enabled = true;
+            }
+        }
+
+        private void radAnyOrSpecificRadio_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+
+            if (radAnyRadio.Checked)
+            {
+                txtSpecificRadio.Enabled = false;
+            }
+            else if (radSpecificRadio.Checked)
+            {
+                txtSpecificRadio.Enabled = true;
+            }
+        }
+
+        public ucRadioList SelectedRadioList
+        {
+            get
+            {
+                if (ucRadioList_Radios == null) return null;
+                return ucRadioList_Radios;
+            }
+        }
+        public ScanPerformanceProfile SelectedDiscoveryProfile
+        {
+            get
+            {
+                ScanPerformanceProfile profile = ScanPerformanceProfile.VeryFast;
+
+                if (comboDiscoverSpeedProfile == null) return profile;
+
+                object selected = comboDiscoverSpeedProfile.SelectedItem;
+                if (selected is ScanPerformanceProfile)
+                {
+                    profile = (ScanPerformanceProfile)selected;
+                }
+                return profile;
+            }
+        }
+
+        private void ucRadioList_Radios_RadioListChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ucRadioList_Radios_SelectedRadioChanged(object sender, EventArgs e)
+        {
+            //old radRadioProtocolSelect_CheckedChanged
+            if (initializing) return;
+
+            switch(ucRadioList_Radios.SelectedRadioProtocol)
+            {
+                case RadioDiscoveryRadioProtocol.P1:
+                    NetworkIO.SelectedRadioProtocol = RadioProtocol.USB;
+                    break;
+                case RadioDiscoveryRadioProtocol.P2:
+                    NetworkIO.SelectedRadioProtocol = RadioProtocol.ETH;
+                    break;
+                default:
+                    NetworkIO.SelectedRadioProtocol = RadioProtocol.ETH; //eek
+                    break;
+            }
+
+            UpdateDDCTab();
+            InitAudioTab();
+        }
+
+        private void OnPowerChangeHandler(bool oldPower, bool newPower)
+        {
+            btnDiscoverRadios.Enabled = !newPower;
+            btnDiscoverRadios.Text = newPower ? "Discover\nDisabled\nRadio is On" : "Discover";
+        }
+
+        private void radDefaultOrRandomListenPort_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            nudUserListenPort.Enabled = radUserListenPort.Checked;
+        }
+
+        private void chkAdvancedNetworkingSettings_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+
+            if (chkAdvancedNetworkingSettings.Checked)
+            {
+                ucRadioList_Radios.Location = new Point(ucRadioList_Radios.Location.X, 183);
+                ucRadioList_Radios.Size = new Size(ucRadioList_Radios.Size.Width, 205);
+                pnlAdvancedNetworkSettings.Visible = true;
+            }
+            else
+            {
+                ucRadioList_Radios.Location = new Point(ucRadioList_Radios.Location.X, 119);
+                ucRadioList_Radios.Size = new Size(ucRadioList_Radios.Size.Width, 269);
+                pnlAdvancedNetworkSettings.Visible = false;
+            }
+        }
+
+        private void btnAddCustomRadio_Click(object sender, EventArgs e)
+        {
+            frmAddCustomRadio f = new frmAddCustomRadio();
+
+            if (comboNICS.Items.Count > 0)
+            {
+                f.Nics.DataSource = null;
+                f.Nics.DataSource = comboNICS.DataSource;
+                f.Nics.DisplayMember = comboNICS.DisplayMember;
+                f.Nics.ValueMember = comboNICS.ValueMember;
+            }
+            else
+            {
+                MessageBox.Show(this, "No NICs available.",
+                    "Custom Radio",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, Common.MB_TOPMOST);
+                return;
+            }
+
+            f.Board = HardwareSpecific.Hardware.ToString();
+
+            DialogResult dr = f.ShowDialog(this);
+            if(dr == DialogResult.Cancel) return;
+
+            NicRadioScanResult selectedNic = f.Nics.SelectedItem as NicRadioScanResult;
+            if (selectedNic == null) return;
+
+            if(!tryParseIpPort(f.RadioIPPort, 1024, out IPAddress addr, out int port))
+            {
+                MessageBox.Show(this, "Invalid IP/host/URL.",
+                    "Custom Radio",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, Common.MB_TOPMOST);
+                return;
+            }
+
+            RadioInfo radio = new RadioInfo()
+            {
+                BetaVersion = 0,
+                CodeVersion = 0,
+                Protocol2Supported = 0,
+
+                DeviceType = HardwareSpecific.Hardware,
+                Protocol = f.Protocol == 0 ? RadioDiscoveryRadioProtocol.P1 : RadioDiscoveryRadioProtocol.P2,
+                DiscoveryPortBase = port,
+                IpAddress = addr,
+                IsCustom = true,                
+            };
+
+            ucRadioList_Radios.AddRadio(selectedNic, radio);
+        }
+
+        public bool LimitInterfacesToEthernetWifi
+        {
+            get
+            {
+                if (chkLimitInterfacesToEthernetWifi == null) return false;
+                return chkLimitInterfacesToEthernetWifi.Checked;
+            }
+        }
+
+        private void chkLimitInterfacesToEthernetWifi_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+
+            rebuildNicCombo();
         }
     }
 

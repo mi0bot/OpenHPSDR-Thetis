@@ -4,7 +4,7 @@ This file is part of a program that implements a Software-Defined Radio.
 
 This code/file can be found on GitHub : https://github.com/ramdor/Thetis
 
-Copyright (C) 2020-2025 Richard Samphire MW0LGE
+Copyright (C) 2020-2026 Richard Samphire MW0LGE
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -37206,13 +37206,7 @@ namespace Thetis
                 //[2.10.3.6]MW0LGE refactored to use Windows Imaging Component (WIC)
                 try
                 {
-                    System.Drawing.Imaging.BitmapData bitmapData = null;
-
                     SharpDX.Direct2D1.Bitmap dxBitmap;
-                    Size2 size = new Size2(bitmap.Width, bitmap.Height);
-
-                    BitmapProperties bitmapProperties = new BitmapProperties(new SharpDX.Direct2D1.PixelFormat(Format.B8G8R8A8_UNorm, _ALPHA_MODE));
-
                     SharpDX.WIC.ImagingFactory factory = null;
                     SharpDX.WIC.BitmapDecoder decoder = null;
                     SharpDX.WIC.BitmapFrameDecode frame = null;
@@ -37230,7 +37224,7 @@ namespace Thetis
                             frame = decoder.GetFrame(0);
                             converter = new SharpDX.WIC.FormatConverter(factory);
 
-                            converter.Initialize(frame, SharpDX.WIC.PixelFormat.Format32bppPRGBA);
+                            converter.Initialize(frame, SharpDX.WIC.PixelFormat.Format32bppPBGRA);
                             dxBitmap = SharpDX.Direct2D1.Bitmap.FromWicBitmap(rt, converter);
                         }
                         finally
@@ -37243,11 +37237,6 @@ namespace Thetis
                     }
                     else
                     {
-                        bitmapData = bitmap.LockBits(
-                            new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
-                            System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                            bitmap.PixelFormat);
-
                         MemoryStream ms = new MemoryStream();
                         bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
                         ms.Position = 0;
@@ -37259,13 +37248,11 @@ namespace Thetis
                             frame = decoder.GetFrame(0);
                             converter = new SharpDX.WIC.FormatConverter(factory);
 
-                            converter.Initialize(frame, SharpDX.WIC.PixelFormat.Format32bppPRGBA);
+                            converter.Initialize(frame, SharpDX.WIC.PixelFormat.Format32bppPBGRA);
                             dxBitmap = SharpDX.Direct2D1.Bitmap.FromWicBitmap(rt, converter);
                         }
                         finally
                         {
-                            if (bitmapData != null) bitmap.UnlockBits(bitmapData);
-
                             Utilities.Dispose(ref converter);
                             Utilities.Dispose(ref frame);
                             Utilities.Dispose(ref decoder);

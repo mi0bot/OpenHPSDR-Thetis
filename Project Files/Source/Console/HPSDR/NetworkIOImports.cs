@@ -13,7 +13,7 @@ namespace Thetis
         public static extern void DeInitMetisSockets();
 
         [DllImport("ChannelMaster.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int nativeInitMetis(String netaddr, String localaddr, int localport, int protocol, int model_id, int remotePort); // MI0BOT: WAN access using different port);
+        public static extern int nativeInitMetis(String netaddr, int port, String localaddr, int localport, int protocol, int model_id);
 
         [DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern int SetXVTREnable(int enable);
@@ -54,14 +54,14 @@ namespace Thetis
         [DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern int GetMetisIPAddr();
 
-        [DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void GetMACAddr(byte[] addr_bytes);
+        //[DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
+        //public static extern void GetMACAddr(byte[] addr_bytes);
 
-        [DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void GetCodeVersion(byte[] addr_bytes);
+        //[DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
+        //public static extern void GetCodeVersion(byte[] addr_bytes);
 
-        [DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void GetBoardID(byte[] addr_bytes);
+        //[DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
+        //public static extern void GetBoardID(byte[] addr_bytes);
 
         [DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern int StartAudioNative();
@@ -371,9 +371,6 @@ namespace Thetis
         [DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetCATPort(int port);
         
-        [DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void SetDiscoveryBoardType(int boardType);                         // MI0BOT: Allow the board type to be pass to lower level code
-
         [DllImport("ChannelMaster.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetTxLatency(int txLatency);                                  // MI0BIT: Pass hardware TX latency to HL2
 

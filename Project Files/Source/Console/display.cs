@@ -618,7 +618,8 @@ namespace Thetis
         }
         private static void OnMinRXNotchWidthChanged(int rx, double width)
         {
-            _mnfMinSizeRX = width;
+            if(rx < 1 || rx > 2) return; 
+            _mnfMinSizeRX[rx-1] = width;
         }
         private static void OnMinTXNotchWidthChanged(double width)
         {
@@ -873,7 +874,7 @@ namespace Thetis
         private static int displayTargetHeight = 0;	// target height
         private static int displayTargetWidth = 0;	// target width
         private static Control displayTarget = null;
-        private static double _mnfMinSizeRX = 100;
+        private static double[] _mnfMinSizeRX = { 100,100 };
         private static double _mnfMinSizeTX = 100;
 
         private static string _cpu;
@@ -911,7 +912,8 @@ namespace Thetis
                     initDisplayArrays(displayTargetWidth, displayTargetHeight);
 
                     //UpdateMNFminWidth();
-                    _mnfMinSizeRX = console.GetMinimumRXNotchWidth(1); // just for rx1
+                    _mnfMinSizeRX[0] = console.GetMinimumRXNotchWidth(1);
+                    _mnfMinSizeRX[1] = console.GetMinimumRXNotchWidth(2);
                     _mnfMinSizeTX = console.GetMinimumTXNotchWidth();
 
                     if (!_bDX2Setup)
@@ -3525,6 +3527,17 @@ namespace Thetis
             }
         }
 
+        private static bool _pa_issue = false;
+        private static string _pa_state_details = "";
+        public static PAstatusIndicatorState PAStatus
+        {
+            set 
+            {
+                _pa_state_details = Console.GetPAStatusText(value);
+                _pa_issue = value != PAstatusIndicatorState.NotUsed && value != PAstatusIndicatorState.OK;
+            }
+        }
+
         private static bool _valid_fps_profile = false;
         private static double _last_valid_check = double.MinValue;
         private static int _dx_fail_retry = 0;
@@ -3834,16 +3847,23 @@ namespace Thetis
                         _bRebuildTXLinearGradBrush = true;
                     }
                 
-                    // HIGH swr display warning
-                    if (high_swr || _power_folded_back)
+                    // HIGH swr display warning, PA warning
+                    if (high_swr || _power_folded_back || _pa_issue)
                     {
-                        if (_power_folded_back)
+                        if (high_swr || _power_folded_back)
                         {
-                            drawStringDX2D("HIGH SWR\n\nPOWER FOLD BACK", fontDX2d_font14, m_bDX2_Red, 245, 20);
+                            if (_power_folded_back)
+                            {
+                                drawStringDX2D("HIGH SWR\n\nPOWER FOLD BACK", fontDX2d_font14, m_bDX2_Red, 245, 20);
+                            }
+                            else
+                            {
+                                drawStringDX2D("HIGH SWR", fontDX2d_font14, m_bDX2_Red, 245, 20);
+                            }
                         }
-                        else
+                        if (_pa_issue)
                         {
-                            drawStringDX2D("HIGH SWR", fontDX2d_font14, m_bDX2_Red, 245, 20);
+                            drawStringDX2D(_pa_state_details, fontDX2d_font14, m_bDX2_Red, 120, high_swr || _power_folded_back ? 40 : 20);
                         }
                         _d2dRenderTarget.DrawRectangle(new RectangleF(3, 3, displayTargetWidth - 6, displayTargetHeight - 6), m_bDX2_Red, 6f);
                     }
@@ -6931,10 +6951,20 @@ namespace Thetis
 
                 if (image != null)
                 {
-                    using (Bitmap graphicsImage = new Bitmap(image))
+                    try
                     {
-                        _bitmapBackground = SDXBitmapFromSysBitmap(_d2dRenderTarget, graphicsImage);
+                        if (image.Width > 0 && image.Height > 0)
+                        {
+                            using (Bitmap graphicsImage = new Bitmap(image))
+                            {
+                                if (graphicsImage.Width > 0 && graphicsImage.Height > 0)
+                                {
+                                    _bitmapBackground = SDXBitmapFromSysBitmap(_d2dRenderTarget, graphicsImage);
+                                }
+                            }
+                        }
                     }
+                    catch { }
                 }
             }
         }
@@ -6956,18 +6986,32 @@ namespace Thetis
             // Convert all pixels 
             for (int y = 0; y < bitmap.Height; y++)
             {
-                int offset = bitmapData.Stride * y;
+                //[2.10.3.13]MW0LGE fix issue where stride can be -ve for bottom up bitmaps
+                IntPtr rowPtr = IntPtr.Add(bitmapData.Scan0, bitmapData.Stride * y);
+                int offset = 0;
+
                 for (int x = 0; x < bitmap.Width; x++)
                 {
-                    byte B = Marshal.ReadByte(bitmapData.Scan0, offset++);
-                    byte G = Marshal.ReadByte(bitmapData.Scan0, offset++);
-                    byte R = Marshal.ReadByte(bitmapData.Scan0, offset++);
-                    byte A = Marshal.ReadByte(bitmapData.Scan0, offset++);
+                    byte B = Marshal.ReadByte(rowPtr, offset++);
+                    byte G = Marshal.ReadByte(rowPtr, offset++);
+                    byte R = Marshal.ReadByte(rowPtr, offset++);
+                    byte A = Marshal.ReadByte(rowPtr, offset++);
 
                     int bgra = B | (G << 8) | (R << 16) | (A << 24);
                     tempStream.Write(bgra);
                 }
 
+                //int offset = bitmapData.Stride * y;
+                //for (int x = 0; x < bitmap.Width; x++)
+                //{
+                //    byte B = Marshal.ReadByte(bitmapData.Scan0, offset++);
+                //    byte G = Marshal.ReadByte(bitmapData.Scan0, offset++);
+                //    byte R = Marshal.ReadByte(bitmapData.Scan0, offset++);
+                //    byte A = Marshal.ReadByte(bitmapData.Scan0, offset++);
+
+                //    int bgra = B | (G << 8) | (R << 16) | (A << 24);
+                //    tempStream.Write(bgra);
+                //}
             }
             bitmap.UnlockBits(bitmapData);
 
@@ -7829,7 +7873,7 @@ namespace Thetis
             List<MNotch> notches = MNotchDB.NotchesInBW(rf_freq, Low - console.MaxFilterWidth, High + console.MaxFilterWidth);
             List<clsNotchCoords> notchData = new List<clsNotchCoords>();
 
-            double min_notch_wdith = localMox(rx) ? _mnfMinSizeTX : _mnfMinSizeRX;
+            double min_notch_wdith = localMox(rx) ? _mnfMinSizeTX : _mnfMinSizeRX[rx-1];
             
             foreach (MNotch n in notches)
             {
@@ -10621,7 +10665,7 @@ namespace Thetis
 
                 int nLuminance = Common.GetLuminance(spot.colour);
                 spotColour = getDXBrushForColour(spot.colour, 255);
-                textBrush = nLuminance <= 128 ? whiteBrush : blackBrush;
+                textBrush = spot.text_colour == Color.Empty ? (nLuminance <= 128 ? whiteBrush : blackBrush) : getDXBrushForColour(spot.text_colour, 255);
 
                 if (spot.Highlight[rx - 1])
                 {

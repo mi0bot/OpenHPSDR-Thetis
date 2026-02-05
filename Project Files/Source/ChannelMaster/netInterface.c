@@ -581,7 +581,7 @@ void DisablePA(int bit)
 {
 	if (prn->tx[0].pa != bit) 
 	{
-		if (prn->discovery.BoardType == HermesLite)
+		if (HPSDRModel == HPSDRModel_HERMESLITE)
 			EnableApolloTuner(!bit);	// MI0BOT: This call used on HL2 to enable/disable PA
 
 		prn->tx[0].pa = bit;		
@@ -1401,12 +1401,6 @@ void LRAudioSwap (int swap)
 		prn->lr_audio_swap = swap;
 }
 
-PORT // MI0BOT: Board type is now discovered to allow different operations for the HL2
-void SetDiscoveryBoardType (int boardType)
-{
-	prn->discovery.BoardType = boardType;
-}
-
 PORT // MI0BOT: Controls the delay for PTT to Tx power out for HL2
 void SetTxLatency (int txLatency)
 {
@@ -1547,6 +1541,8 @@ void create_rnet()
 	prn = (RADIONET)malloc(sizeof(radionet));
 	if (prn) {
 		bandwidth_monitor_reset();
+		prn->base_outbound_port = 1024;
+		prn->p2_custom_port_base = 1025;
 		prn->RxBuff = (double**) calloc (8, sizeof (double*));
 		for (int i = 0; i < 8; i++)
 			prn->RxBuff[i] = (double*) calloc (64, 2 * sizeof (double));
@@ -1556,7 +1552,7 @@ void create_rnet()
 		prn->OutBufp = (char*)calloc(1, sizeof(char) * 1440);
 		prn->outLRbufp = (double*)calloc(1, sizeof(double) * 1440); 
 		prn->outIQbufp = (double*)calloc(1, sizeof(double) * 1440);
-		prn->rx_base_port = 1035;
+		//prn->rx_base_port = prn->base_radio_port + 11;// RXBasePort;// 1035;
 		prn->run = 0;
 		prn->wdt = 0;
 		prn->sendHighPriority = 1;
@@ -1592,7 +1588,7 @@ void create_rnet()
 		prn->mic.line_in_gain = 0;
 		prn->mic.spp = 64; // I-samples per packet
 
-		prn->wb_base_port = 1027;
+		//prn->wb_base_port = prn->base_radio_port + 3;// WB0Port;// 1027;
 		prn->wb_base_dispid = 32;
 		prn->wb_enable = 0;
 		prn->wb_samples_per_packet = 512;
@@ -1673,19 +1669,6 @@ void create_rnet()
 
 		prn->reset_on_disconnect = 0;	// MI0BOT: Intialised to not reset on software disconnect
 		
-		for (i = 0; i < 6; i++)
-			prn->discovery.MACAddr[i] = 0;
-		prn->discovery.BoardType = 0;
-		prn->discovery.protocolVersion = 0;
-		prn->discovery.fwCodeVersion = 0;
-		prn->discovery.MercuryVersion_0 = 0;
-		prn->discovery.MercuryVersion_1 = 0;
-		prn->discovery.MercuryVersion_2 = 0;
-		prn->discovery.MercuryVersion_3 = 0;
-		prn->discovery.PennyVersion = 0;
-		prn->discovery.MetisVersion = 0;
-		prn->discovery.numRxs = 0;
-
 		prbpfilter = (RBPFILTER)malloc0(sizeof(rbpfilter));
 		prbpfilter->bpfilter = 0;
 		prbpfilter->enable = 1;

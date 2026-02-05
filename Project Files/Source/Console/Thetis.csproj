@@ -416,6 +416,7 @@
     <Compile Include="clsCountryData.cs" />
     <Compile Include="clsDBMan.cs" />
     <Compile Include="clsDiscord.cs" />
+    <Compile Include="clsDiscoveredRadioPicker.cs" />
     <Compile Include="clsDPISafeTools.cs" />
     <Compile Include="clsHardwareSpecific.cs" />
     <Compile Include="clsImgeFetcher.cs" />
@@ -430,6 +431,12 @@
     </Compile>
     <Compile Include="frmAbout.Designer.cs">
       <DependentUpon>frmAbout.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmAddCustomRadio.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmAddCustomRadio.Designer.cs">
+      <DependentUpon>frmAddCustomRadio.cs</DependentUpon>
     </Compile>
     <Compile Include="frmBandwidth.cs">
       <SubType>Form</SubType>
@@ -462,6 +469,7 @@
       <DependentUpon>frmVariablePicker.cs</DependentUpon>
     </Compile>
     <Compile Include="HPSDR\IoBoardHl2.cs" />
+    <Compile Include="HPSDR\clsRadioDiscovery.cs" />
     <Compile Include="TimeOutTimerManager.cs" />
     <Compile Include="Firewall.cs" />
     <Compile Include="cmaster.cs" />
@@ -790,6 +798,12 @@
     <Compile Include="ucQuickRecall.Designer.cs">
       <DependentUpon>ucQuickRecall.cs</DependentUpon>
     </Compile>
+    <Compile Include="ucRadioList.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucRadioList.Designer.cs">
+      <DependentUpon>ucRadioList.cs</DependentUpon>
+    </Compile>
     <Compile Include="ucSignalSelect.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -874,6 +888,9 @@
     <None Include="Resources\cont_copy.png" />
     <None Include="Resources\cont_save.png" />
     <None Include="Resources\cont_load.png" />
+    <None Include="Resources\Command-Refresh-16.png" />
+    <Content Include="Resources\paflt.png" />
+    <Content Include="Resources\paok.png" />
     <Content Include="Resources\Thetis2_256.ico" />
     <Content Include="Resources\Thetis2_48.ico" />
     <None Include="Resources\resizegrab.png" />
@@ -968,6 +985,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmAbout.resx">
       <DependentUpon>frmAbout.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmAddCustomRadio.resx">
+      <DependentUpon>frmAddCustomRadio.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmBandwidth.resx">
       <DependentUpon>frmBandwidth.cs</DependentUpon>

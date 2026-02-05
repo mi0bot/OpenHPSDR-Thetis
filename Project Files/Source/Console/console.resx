@@ -126,11 +126,51 @@
   <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>832, 17</value>
   </metadata>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="lblPAProfile.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
+  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="lblPAProfile.Image" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="lblPAProfile.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>Off</value>
+  </data>
+  <data name="lblPAProfile.Location" type="System.Drawing.Point, System.Drawing">
+    <value>510, 557</value>
+  </data>
+  <data name="lblPAProfile.Size" type="System.Drawing.Size, System.Drawing">
+    <value>197, 14</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="lblPAProfile.TabIndex" type="System.Int32, mscorlib">
+    <value>126</value>
+  </data>
+  <data name="lblPAProfile.Text" xml:space="preserve">
+    <value>PA Profile</value>
+  </data>
+  <data name="lblPAProfile.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleLeft</value>
+  </data>
+  <data name="lblPAProfile.ToolTip" xml:space="preserve">
+    <value>The currently active PA profile. Right click to view settings.</value>
+  </data>
+  <data name="&gt;&gt;lblPAProfile.Name" xml:space="preserve">
+    <value>lblPAProfile</value>
+  </data>
+  <data name="&gt;&gt;lblPAProfile.Type" xml:space="preserve">
+    <value>System.Windows.Forms.LabelTS, Thetis, Version=2.10.3.13, Culture=neutral, PublicKeyToken=null</value>
+  </data>
+  <data name="&gt;&gt;lblPAProfile.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;lblPAProfile.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
   <data name="btnAPF_type.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
   </data>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="btnAPF_type.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
   </data>
@@ -146,7 +186,6 @@
   <data name="btnAPF_type.Size" type="System.Drawing.Size, System.Drawing">
     <value>36, 20</value>
   </data>
-  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="btnAPF_type.TabIndex" type="System.Int32, mscorlib">
     <value>126</value>
   </data>
@@ -1148,45 +1187,6 @@
   </data>
   <data name="&gt;&gt;chkDX.ZOrder" xml:space="preserve">
     <value>8</value>
-  </data>
-  <data name="lblPAProfile.Font" type="System.Drawing.Font, System.Drawing">
-    <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
-  </data>
-  <data name="lblPAProfile.Image" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
-  </data>
-  <data name="lblPAProfile.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>Off</value>
-  </data>
-  <data name="lblPAProfile.Location" type="System.Drawing.Point, System.Drawing">
-    <value>510, 557</value>
-  </data>
-  <data name="lblPAProfile.Size" type="System.Drawing.Size, System.Drawing">
-    <value>197, 14</value>
-  </data>
-  <data name="lblPAProfile.TabIndex" type="System.Int32, mscorlib">
-    <value>126</value>
-  </data>
-  <data name="lblPAProfile.Text" xml:space="preserve">
-    <value>PA Profile</value>
-  </data>
-  <data name="lblPAProfile.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleLeft</value>
-  </data>
-  <data name="lblPAProfile.ToolTip" xml:space="preserve">
-    <value>The currently active PA profile. Right click to view settings.</value>
-  </data>
-  <data name="&gt;&gt;lblPAProfile.Name" xml:space="preserve">
-    <value>lblPAProfile</value>
-  </data>
-  <data name="&gt;&gt;lblPAProfile.Type" xml:space="preserve">
-    <value>System.Windows.Forms.LabelTS, Thetis, Version=2.10.3.13, Culture=neutral, PublicKeyToken=null</value>
-  </data>
-  <data name="&gt;&gt;lblPAProfile.Parent" xml:space="preserve">
-    <value>$this</value>
-  </data>
-  <data name="&gt;&gt;lblPAProfile.ZOrder" xml:space="preserve">
-    <value>3</value>
   </data>
   <data name="ptbFilterShift.BackgroundImageLayout" type="System.Windows.Forms.ImageLayout, System.Windows.Forms">
     <value>Stretch</value>
@@ -10213,7 +10213,19 @@ Ctrl + Left Click on any Band Button adds to Stack</value>
     <value>None</value>
   </data>
   <data name="toolStripStatusLabel_Fill.Size" type="System.Drawing.Size, System.Drawing">
-    <value>221, 15</value>
+    <value>205, 15</value>
+  </data>
+  <data name="toolStripStatusLabel_PAstatus.ImageScaling" type="System.Windows.Forms.ToolStripItemImageScaling, System.Windows.Forms">
+    <value>None</value>
+  </data>
+  <data name="toolStripStatusLabel_PAstatus.Size" type="System.Drawing.Size, System.Drawing">
+    <value>64, 15</value>
+  </data>
+  <data name="toolStripStatusLabel_PAstatus.ToolTipText" xml:space="preserve">
+    <value>PA Status</value>
+  </data>
+  <data name="toolStripStatusLabel_PAstatus.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
   </data>
   <data name="toolStripStatusLabel_N1MM.AutoSize" type="System.Boolean, mscorlib">
     <value>False</value>
@@ -10229,6 +10241,12 @@ Ctrl + Left Click on any Band Button adds to Stack</value>
   </data>
   <data name="toolStripStatusLabel_N1MM.Visible" type="System.Boolean, mscorlib">
     <value>False</value>
+  </data>
+  <data name="toolStripStatus_PAspacer.AutoSize" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="toolStripStatus_PAspacer.Size" type="System.Drawing.Size, System.Drawing">
+    <value>16, 15</value>
   </data>
   <data name="toolStripStatusLabel_TCI.AutoSize" type="System.Boolean, mscorlib">
     <value>False</value>
@@ -18876,10 +18894,22 @@ Ctrl + Left Click on any Band Button adds to Stack</value>
   <data name="&gt;&gt;toolStripStatusLabel_Fill.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripStatusLabel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="&gt;&gt;toolStripStatusLabel_PAstatus.Name" xml:space="preserve">
+    <value>toolStripStatusLabel_PAstatus</value>
+  </data>
+  <data name="&gt;&gt;toolStripStatusLabel_PAstatus.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripStatusLabel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="&gt;&gt;toolStripStatusLabel_N1MM.Name" xml:space="preserve">
     <value>toolStripStatusLabel_N1MM</value>
   </data>
   <data name="&gt;&gt;toolStripStatusLabel_N1MM.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripStatusLabel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;toolStripStatus_PAspacer.Name" xml:space="preserve">
+    <value>toolStripStatus_PAspacer</value>
+  </data>
+  <data name="&gt;&gt;toolStripStatus_PAspacer.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripStatusLabel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;toolStripStatusLabel_TCI.Name" xml:space="preserve">
