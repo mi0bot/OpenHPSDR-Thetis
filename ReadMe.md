@@ -1,4 +1,8 @@
-# Latest Release v2.10.3.12 Beta 2 6th January, 2026
+# Latest Release v2.10.3.12 6th February, 2026
+
+# 2.10.3.12 (2026-02-06)
+
+- Upgraded to allow Pure Signal at full sample rate (384K)
 
 # 2.10.3.12 Beta 2 (2026-01-06)
 
