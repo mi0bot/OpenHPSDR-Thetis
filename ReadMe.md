@@ -1,13 +1,6 @@
-# Latest Release v2.10.3.12 6th February, 2026
+# Latest Release v2.10.3.13 Beta 1 16th February, 2026
 
-# 2.10.3.12 (2026-02-06)
-
-- Upgraded to allow Pure Signal at full sample rate (384K)
-
-# 2.10.3.12 Beta 2 (2026-01-06)
+# 2.10.3.13 Beta 1 (2026-02-16)
 
 - Upgraded to latest development codebase of official Thetis
 
-# 2.10.3.12 Beta 1 (2025-10-21)
-
-- Upgraded to latest development codebase of official Thetis
