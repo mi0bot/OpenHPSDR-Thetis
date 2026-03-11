@@ -444,6 +444,15 @@
     <Compile Include="clsImgeFetcher.cs" />
     <Compile Include="clsLegacyItemController.cs" />
     <Compile Include="clsMeterScriptEngine.cs" />
+    <Compile Include="frmCFCConfig.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmCFCConfig.Designer.cs">
+      <DependentUpon>frmCFCConfig.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ucParametricEq.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="clsProgressLog.cs" />
     <Compile Include="clsSingleInstance.cs" />
     <Compile Include="clsThetisSkinService.cs" />
@@ -905,6 +914,8 @@
     <None Include="Resources\cont_save.png" />
     <None Include="Resources\cont_load.png" />
     <None Include="Resources\Command-Refresh-16.png" />
+    <None Include="Resources\eye_black_32.png" />
+    <None Include="Resources\eye_black_24.png" />
     <Content Include="Resources\paflt.png" />
     <Content Include="Resources\paok.png" />
     <Content Include="Resources\Thetis2_256.ico" />
@@ -1007,6 +1018,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmBandwidth.resx">
       <DependentUpon>frmBandwidth.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmCFCConfig.resx">
+      <DependentUpon>frmCFCConfig.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmDBMan.resx">
       <DependentUpon>frmDBMan.cs</DependentUpon>

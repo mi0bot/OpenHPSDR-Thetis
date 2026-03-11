@@ -1789,5 +1789,146 @@ namespace Thetis
             }
         }
         //
+
+        //
+        [DllImport("kernel32.dll", EntryPoint = "GetDiskFreeSpaceExW")]
+        private static extern bool GetDiskFreeSpaceExW(
+        [MarshalAs(UnmanagedType.LPWStr)] string lpDirectoryName,
+        out ulong lpFreeBytesAvailable,
+        out ulong lpTotalNumberOfBytes,
+        out ulong lpTotalNumberOfFreeBytes);
+
+        public static bool TryGetDriveTotalAndFreeBytes(string folderPath, out ulong totalBytes, out ulong freeBytes)
+        {
+            totalBytes = 0UL;
+            freeBytes = 0UL;
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(folderPath)) return false;
+
+                string fullPath = folderPath.Trim();
+
+                try
+                {
+                    fullPath = Path.GetFullPath(fullPath);
+                }
+                catch
+                {
+                }
+
+                if (fullPath.StartsWith(@"\\?\UNC\", StringComparison.OrdinalIgnoreCase))
+                {
+                    fullPath = @"\\" + fullPath.Substring(8);
+                }
+                else if (fullPath.StartsWith(@"\\?\", StringComparison.OrdinalIgnoreCase))
+                {
+                    fullPath = fullPath.Substring(4);
+                }
+
+                string queryPath = fullPath;
+
+                try
+                {
+                    if (File.Exists(queryPath))
+                    {
+                        string dir = Path.GetDirectoryName(queryPath);
+                        if (!string.IsNullOrWhiteSpace(dir)) queryPath = dir;
+                    }
+                }
+                catch
+                {
+                }
+
+                string current = queryPath;
+                for (int i = 0; i < 64; i++)
+                {
+                    bool exists = false;
+                    try
+                    {
+                        exists = Directory.Exists(current);
+                    }
+                    catch
+                    {
+                        exists = false;
+                    }
+
+                    if (exists) break;
+
+                    string parent = null;
+                    try
+                    {
+                        parent = Path.GetDirectoryName(current);
+                    }
+                    catch
+                    {
+                    }
+
+                    if (string.IsNullOrWhiteSpace(parent)) break;
+                    if (string.Equals(parent, current, StringComparison.Ordinal)) break;
+                    current = parent;
+                }
+
+                ulong freeAvail;
+                ulong total;
+                ulong totalFree;
+
+                bool ok = GetDiskFreeSpaceExW(current, out freeAvail, out total, out totalFree);
+                if (!ok)
+                {
+                    string root = null;
+                    try
+                    {
+                        root = Path.GetPathRoot(fullPath);
+                    }
+                    catch
+                    {
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(root))
+                    {
+                        ok = GetDiskFreeSpaceExW(root, out freeAvail, out total, out totalFree);
+                    }
+
+                    if (!ok && fullPath.StartsWith(@"\\", StringComparison.Ordinal))
+                    {
+                        string uncRoot = getUncShareRoot(fullPath);
+                        if (!string.IsNullOrWhiteSpace(uncRoot))
+                        {
+                            ok = GetDiskFreeSpaceExW(uncRoot, out freeAvail, out total, out totalFree);
+                        }
+                    }
+                }
+
+                if (!ok) return false;
+
+                totalBytes = total;
+                freeBytes = freeAvail;
+                return true;
+            }
+            catch
+            {
+                totalBytes = 0UL;
+                freeBytes = 0UL;
+                return false;
+            }
+        }
+
+        private static string getUncShareRoot(string uncPath)
+        {
+            if (string.IsNullOrWhiteSpace(uncPath)) return null;
+            if (!uncPath.StartsWith(@"\\", StringComparison.Ordinal)) return null;
+
+            int first = uncPath.IndexOf('\\', 2);
+            if (first < 0) return null;
+
+            int second = uncPath.IndexOf('\\', first + 1);
+            if (second < 0) second = uncPath.Length;
+
+            string root = uncPath.Substring(0, second);
+            if (!root.EndsWith("\\", StringComparison.Ordinal)) root = root + "\\";
+            return root;
+        }
+        //
     }
 }

@@ -908,6 +908,8 @@
             this.toolStripStatusLabel_PAstatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel_N1MM = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatus_PAspacer = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel_play_record = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatus_RecordPlay_spacer = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel_TCI = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel_CatTCPip = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel_CatSerial = new System.Windows.Forms.ToolStripStatusLabel();
@@ -5009,6 +5011,8 @@
             this.toolStripStatusLabel_PAstatus,
             this.toolStripStatusLabel_N1MM,
             this.toolStripStatus_PAspacer,
+            this.toolStripStatusLabel_play_record,
+            this.toolStripStatus_RecordPlay_spacer,
             this.toolStripStatusLabel_TCI,
             this.toolStripStatusLabel_CatTCPip,
             this.toolStripStatusLabel_CatSerial,
@@ -5357,6 +5361,17 @@
             // 
             resources.ApplyResources(this.toolStripStatus_PAspacer, "toolStripStatus_PAspacer");
             this.toolStripStatus_PAspacer.Name = "toolStripStatus_PAspacer";
+            // 
+            // toolStripStatusLabel_play_record
+            // 
+            this.toolStripStatusLabel_play_record.Image = global::Thetis.Properties.Resources.record;
+            resources.ApplyResources(this.toolStripStatusLabel_play_record, "toolStripStatusLabel_play_record");
+            this.toolStripStatusLabel_play_record.Name = "toolStripStatusLabel_play_record";
+            // 
+            // toolStripStatus_RecordPlay_spacer
+            // 
+            resources.ApplyResources(this.toolStripStatus_RecordPlay_spacer, "toolStripStatus_RecordPlay_spacer");
+            this.toolStripStatus_RecordPlay_spacer.Name = "toolStripStatus_RecordPlay_spacer";
             // 
             // toolStripStatusLabel_TCI
             // 
@@ -7909,5 +7924,7 @@
         private ButtonTS btnAPF_type;
         private ToolStripStatusLabel toolStripStatusLabel_PAstatus;
         private ToolStripStatusLabel toolStripStatus_PAspacer;
+        private ToolStripStatusLabel toolStripStatusLabel_play_record;
+        private ToolStripStatusLabel toolStripStatus_RecordPlay_spacer;
     }
 }

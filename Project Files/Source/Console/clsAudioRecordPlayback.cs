@@ -45,6 +45,7 @@ using System.Text;
 using System.Threading;
 using NAudio.Wave;
 using NAudio.MediaFoundation;
+using NAudio.CoreAudioApi;
 using Newtonsoft.Json;
 using System.Globalization;
 
@@ -71,12 +72,26 @@ namespace Thetis
         Pcm8 = 4
     }
 
+    public enum AudioDeviceDriver
+    {
+        MME = 0,
+        WASAPI = 1
+    }
+
+    public enum PCInputSource
+    {
+        Both = 0,
+        Left = 1,
+        Right = 2
+     }
+
     public sealed class RecordingDetails
     {
         public DateTime UtcTime { get; set; }
         public string Frequency { get; set; } = "";
         public string Mode { get; set; } = "";
         public string Band { get; set; } = "";
+        //public string DDCFrequency { get; set; } = "";
 
         public string WavFile { get; set; } = "";
         public long? WavFileSizeBytes { get; set; }
@@ -96,24 +111,42 @@ namespace Thetis
     {
         public int Id { get; private set; }
         public string Name { get; private set; }
+        public AudioDeviceDriver Driver { get; private set; }
+
+        public int DeviceId
+        {
+            get { return Id; }
+        }
 
         public AudioDeviceInfo(int id, string name)
         {
             Id = id;
             Name = name ?? string.Empty;
+            Driver = AudioDeviceDriver.MME;
+        }
+
+        public AudioDeviceInfo(int id, string name, AudioDeviceDriver driver)
+        {
+            Id = id;
+            Name = name ?? string.Empty;
+            Driver = driver;
         }
 
         public override string ToString()
         {
-            return Name;
+            return DisplayName;
         }
 
         public string DisplayName
         {
             get
             {
-                if (!string.IsNullOrWhiteSpace(Name)) return Name;
-                return "Device " + Id.ToString();
+                string baseName = !string.IsNullOrWhiteSpace(Name) ? Name : ("Device " + Id.ToString(CultureInfo.InvariantCulture));
+
+                if (Driver == AudioDeviceDriver.WASAPI) return "WASAPI: " + baseName;
+                if (Driver == AudioDeviceDriver.MME) return "MME: " + baseName;
+
+                return baseName;
             }
         }
     }
@@ -123,14 +156,23 @@ namespace Thetis
         public const bool PlaybackCosineFadeEnabled = true;
         public const int PlaybackCosineFadeMs = 50;
 
+        private const int PcAudioWasapiInputIdBase = 100000;
+        private const int PcAudioWasapiOutputIdBase = 200000;
+
+        private const int RecordSpaceCheckMs = 2000;
+
         private readonly object _sync = new object();
 
+        private Timer _record_space_timer;
+        private int _record_space_timer_busy;
+
         private string _audio_folder;
+        private int _free_space_perc;
 
         private bool _is_recording;
         private bool _is_playing;
 
-        private WaveInEvent _pc_wave_in;
+        private IWaveIn _pc_wave_in;
         private NAudio.Wave.WaveFileWriter _pc_wave_writer;
 
         private string _active_record_id;
@@ -143,7 +185,7 @@ namespace Thetis
         private string _active_play_id;
         private string _active_play_filename;
 
-        private WaveOutEvent _pc_wave_out;
+        private IWavePlayer _pc_wave_out;
         private AudioFileReader _pc_audio_reader;
 
         private int _active_record_wfw_id;
@@ -176,6 +218,8 @@ namespace Thetis
         public int InputPCDeviceID { get; set; } = -1;
         public int OutputPCDeviceID { get; set; } = -1;
 
+        public PCInputSource PCInputSource { get; set; } = PCInputSource.Both;
+
         private Console _console;
         private Dictionary<string, bool> _playbackSetting;
         private Dictionary<string, bool> _prePlaybackSetting;
@@ -203,6 +247,7 @@ namespace Thetis
             _pc_playback_gain = 1.0f;
 
             _audio_folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic), "Thetis");
+            _free_space_perc = 10;
 
             RxSource = AudioRecordRxSource.ReceiverOutputAudio;
             TxSource = AudioRecordTxSource.MicAudio;
@@ -212,6 +257,8 @@ namespace Thetis
             DitherAmount = 0.8f;
 
             ensureFolderExists(_audio_folder);
+
+            _record_space_timer = new Timer(onRecordSpaceTimer, null, Timeout.Infinite, Timeout.Infinite);
         }
 
         private void initPlaybackSettings()
@@ -222,6 +269,7 @@ namespace Thetis
                 _playbackSetting["COMP"] = _console.CPDR;
                 _playbackSetting["CFC"] = _console.CFCEnabled;
                 _playbackSetting["PHASE"] = _console.PhaseRotEnabled;
+                _playbackSetting["LEVELER"] = _console.LevelerEnabled;
                 _playbackSetting["MON"] = _console.MON;
                 _playbackSetting["BYPASS_VAC"] = _console.BypassVACWhenPlayingWAV;
                 _playbackSetting["MOX"] = _console.MOX;
@@ -246,6 +294,7 @@ namespace Thetis
                     string hdrErr;
 
                     if (!tryParseWaveHeader(br, out fmtTag, out sr, out ch, out bps, out ds, out dl, out hdrErr)) return null;
+                    if (ch != 2) return null;
                     if (sr <= 0) return null;
 
                     int bytesPerSample;
@@ -333,6 +382,7 @@ namespace Thetis
                     d.Frequency = existing.frequency ?? "";
                     d.Mode = existing.mode ?? "";
                     d.Band = existing.band ?? "";
+                    //d.DDCFrequency = existing.ddcfrequency ?? "";
 
                     d.Mp3File = existing.mp3_file ?? "";
                     d.Mp3FileSizeBytes = existing.mp3_file_size_bytes;
@@ -342,6 +392,7 @@ namespace Thetis
                     d.Frequency = "";
                     d.Mode = "";
                     d.Band = "";
+                    //d.DDCFrequency = "";
 
                     string mp3Guess = Path.ChangeExtension(wavPath, ".mp3");
                     if (File.Exists(mp3Guess))
@@ -443,6 +494,7 @@ namespace Thetis
                     _prePlaybackSetting["COMP"] = _console.CPDR;
                     _prePlaybackSetting["CFC"] = _console.CFCEnabled;
                     _prePlaybackSetting["PHASE"] = _console.PhaseRotEnabled;
+                    _prePlaybackSetting["LEVELER"] = _console.LevelerEnabled;
                     _prePlaybackSetting["MON"] = _console.MON;
                     _prePlaybackSetting["BYPASS_VAC"] = Audio.VACBypass;
                     _prePlaybackSetting["MOX"] = _console.MOX;
@@ -460,6 +512,7 @@ namespace Thetis
                     if (_prePlaybackSetting.ContainsKey("COMP") && _console.CPDR != _prePlaybackSetting["COMP"]) _console.CPDR = _prePlaybackSetting["COMP"];
                     if (_prePlaybackSetting.ContainsKey("CFC") && _console.CFCEnabled != _prePlaybackSetting["CFC"]) _console.CFCEnabled = _prePlaybackSetting["CFC"];
                     if (_prePlaybackSetting.ContainsKey("PHASE") && _console.PhaseRotEnabled != _prePlaybackSetting["PHASE"]) _console.PhaseRotEnabled = _prePlaybackSetting["PHASE"];
+                    if (_prePlaybackSetting.ContainsKey("LEVELER") && _console.LevelerEnabled != _prePlaybackSetting["LEVELER"]) _console.LevelerEnabled = _prePlaybackSetting["LEVELER"];
                     if (_prePlaybackSetting.ContainsKey("MON") && _console.MON != _prePlaybackSetting["MON"]) _console.MON = _prePlaybackSetting["MON"];
                     if (_prePlaybackSetting.ContainsKey("BYPASS_VAC") && Audio.VACBypass != _prePlaybackSetting["BYPASS_VAC"]) Audio.VACBypass = _prePlaybackSetting["BYPASS_VAC"];
                     if (_prePlaybackSetting.ContainsKey("MOX") && _console.MOX != _prePlaybackSetting["MOX"]) _console.MOX = _prePlaybackSetting["MOX"];
@@ -471,21 +524,29 @@ namespace Thetis
             }
         }
 
-        private void activatePlaybackRecordSettings(bool playback)
+        private void activatePlaybackRecordSettings(bool playback, bool ignore_temp_changes = false)
         {
             if (playback)
             {
-                if (GetPlaybackSetting("TXEQ") && _console.TXEQ) _console.TXEQ = false;
-                if (GetPlaybackSetting("COMP") && _console.CPDR) _console.CPDR = false;
-                if (GetPlaybackSetting("CFC") && _console.CFCEnabled) _console.CFCEnabled = false;
-                if (GetPlaybackSetting("PHASE") && _console.PhaseRotEnabled) _console.PhaseRotEnabled = false;
+                if (!ignore_temp_changes)
+                {
+                    if (GetPlaybackSetting("TXEQ") && _console.TXEQ) _console.TXEQ = false;
+                    if (GetPlaybackSetting("COMP") && _console.CPDR) _console.CPDR = false;
+                    if (GetPlaybackSetting("CFC") && _console.CFCEnabled) _console.CFCEnabled = false;
+                    if (GetPlaybackSetting("PHASE") && _console.PhaseRotEnabled) _console.PhaseRotEnabled = false;
+                    if (GetPlaybackSetting("LEVELER") && _console.LevelerEnabled) _console.LevelerEnabled = false;
+                }
+
                 if (GetPlaybackSetting("MON") && !_console.MON) _console.MON = true;
                 Audio.VACBypass = _console.BypassVACWhenPlayingWAV;
                 if (!_console.MOX && MoxOnPlayback) _console.MOX = true;
             }
             else
             {
-                if (GetPlaybackSetting("RXEQ") && _console.RXEQ) _console.RXEQ = false;
+                if (!ignore_temp_changes)
+                {
+                    if (GetPlaybackSetting("RXEQ") && _console.RXEQ) _console.RXEQ = false;
+                }
             }
         }
 
@@ -523,6 +584,13 @@ namespace Thetis
                 }
             }
 
+            stopRecordSpaceTimer();
+            if (_record_space_timer != null)
+            {
+                try { _record_space_timer.Dispose(); } catch { }
+                _record_space_timer = null;
+            }
+
             _console.MoxPreChangeHandlers -= OnPreMox;
         }
 
@@ -544,27 +612,158 @@ namespace Thetis
             }
         }
 
+        public int StopRecordingFreeSpacePerc
+        {
+            get
+            {
+                return _free_space_perc;
+            }
+            set
+            {
+                _free_space_perc = value;
+            }
+        }
+
+        public bool OkToRecord(string filepath)
+        {
+            bool ok = Common.TryGetDriveTotalAndFreeBytes(_audio_folder, out ulong totalBytes, out ulong freeBytes);
+            if (ok && totalBytes > 0UL)
+            {
+                ulong perc_free = (freeBytes * 100UL) / totalBytes;
+                if (perc_free > 100UL) perc_free = 100UL;
+                
+                return perc_free >= (ulong)_free_space_perc;
+            }
+
+            return true; // if free space cannot be determined, allow recording
+        }
+        private void startRecordSpaceTimer()
+        {
+            Timer t = _record_space_timer;
+            if (t == null) return;
+            t.Change(RecordSpaceCheckMs, RecordSpaceCheckMs);
+        }
+
+        private void stopRecordSpaceTimer()
+        {
+            Timer t = _record_space_timer;
+            if (t == null) return;
+
+            try { t.Change(Timeout.Infinite, Timeout.Infinite); } catch { }
+            Interlocked.Exchange(ref _record_space_timer_busy, 0);
+        }
+
+        private void onRecordSpaceTimer(object state)
+        {
+            if (Interlocked.Exchange(ref _record_space_timer_busy, 1) != 0) return;
+
+            try
+            {
+                bool isRec;
+                string path;
+
+                lock (_sync)
+                {
+                    isRec = _is_recording;
+                    path = _active_record_filename;
+                }
+
+                if (!isRec) return;
+                if (string.IsNullOrWhiteSpace(path)) return;
+
+                if (!OkToRecord(path))
+                {
+                    StopRecord(out string _);
+                }
+            }
+            catch
+            {
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _record_space_timer_busy, 0);
+            }
+        }
+
         public List<AudioDeviceInfo> GetPcInputDevices()
         {
             List<AudioDeviceInfo> list = new List<AudioDeviceInfo>();
-            int count = WaveIn.DeviceCount;
-            for (int i = 0; i < count; i++)
+
+            list.Add(new AudioDeviceInfo(-1, "Default Windows Sound Mapper - Input", AudioDeviceDriver.MME));
+
+            try
             {
-                WaveInCapabilities caps = WaveIn.GetCapabilities(i);
-                list.Add(new AudioDeviceInfo(i, caps.ProductName));
+                MMDeviceEnumerator en = new MMDeviceEnumerator();
+                MMDeviceCollection devs = en.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
+
+                for (int i = 0; i < devs.Count; i++)
+                {
+                    MMDevice dev = devs[i];
+                    string name = dev != null ? dev.FriendlyName : null;
+                    if (string.IsNullOrWhiteSpace(name)) name = "Input " + i.ToString(CultureInfo.InvariantCulture);
+                    list.Add(new AudioDeviceInfo(PcAudioWasapiInputIdBase + i, name, AudioDeviceDriver.WASAPI));
+                }
             }
+            catch
+            {
+            }
+
+            try
+            {
+                int count = WaveIn.DeviceCount;
+                for (int i = 0; i < count; i++)
+                {
+                    WaveInCapabilities caps = WaveIn.GetCapabilities(i);
+                    string name = caps.ProductName;
+                    if (string.IsNullOrWhiteSpace(name)) name = "Input " + i.ToString(CultureInfo.InvariantCulture);
+                    list.Add(new AudioDeviceInfo(i, name, AudioDeviceDriver.MME));
+                }
+            }
+            catch
+            {
+            }
+
             return list;
         }
 
         public List<AudioDeviceInfo> GetPcOutputDevices()
         {
             List<AudioDeviceInfo> list = new List<AudioDeviceInfo>();
-            int count = WaveOut.DeviceCount;
-            for (int i = 0; i < count; i++)
+
+            list.Add(new AudioDeviceInfo(-1, "Default Windows Sound Mapper - Output", AudioDeviceDriver.MME));
+
+            try
             {
-                WaveOutCapabilities caps = WaveOut.GetCapabilities(i);
-                list.Add(new AudioDeviceInfo(i, caps.ProductName));
+                MMDeviceEnumerator en = new MMDeviceEnumerator();
+                MMDeviceCollection devs = en.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+
+                for (int i = 0; i < devs.Count; i++)
+                {
+                    MMDevice dev = devs[i];
+                    string name = dev != null ? dev.FriendlyName : null;
+                    if (string.IsNullOrWhiteSpace(name)) name = "Output " + i.ToString(CultureInfo.InvariantCulture);
+                    list.Add(new AudioDeviceInfo(PcAudioWasapiOutputIdBase + i, name, AudioDeviceDriver.WASAPI));
+                }
             }
+            catch
+            {
+            }
+
+            try
+            {
+                int count = WaveOut.DeviceCount;
+                for (int i = 0; i < count; i++)
+                {
+                    WaveOutCapabilities caps = WaveOut.GetCapabilities(i);
+                    string name = caps.ProductName;
+                    if (string.IsNullOrWhiteSpace(name)) name = "Output " + i.ToString(CultureInfo.InvariantCulture);
+                    list.Add(new AudioDeviceInfo(i, name, AudioDeviceDriver.MME));
+                }
+            }
+            catch
+            {
+            }
+
             return list;
         }
 
@@ -946,7 +1145,7 @@ namespace Thetis
             }
         }
 
-        public string RecordToFileFromWDSP(string record_id, string full_path, int wfw_id, out string error, bool remove_if_file_exists = false, RecordingDetails details = null)
+        public string RecordToFileFromWDSP(string record_id, string full_path, int wfw_id, out string error, bool remove_if_file_exists = false, RecordingDetails details = null, bool ignore_temp_changes = false)
         {
             error = null;
 
@@ -979,6 +1178,12 @@ namespace Thetis
                     if (remove_if_file_exists && File.Exists(full_target))
                     {
                         try { File.Delete(full_target); } catch { }
+                    }
+
+                    if (!OkToRecord(full_target))
+                    {
+                        error = "Not enough free space to start recording.";
+                        return null;
                     }
 
                     if (!Common.CanCreateFile(full_target))
@@ -1054,7 +1259,7 @@ namespace Thetis
                     bool recTXPreProc = TxSource == AudioRecordTxSource.MicAudio;
 
                     storeRestoreSettings(true, false);
-                    activatePlaybackRecordSettings(false);
+                    activatePlaybackRecordSettings(false, ignore_temp_changes);
 
                     Thread.Sleep(50);
 
@@ -1074,6 +1279,7 @@ namespace Thetis
 
                     Audio.WaveRecord = true;
                     setRecordingState(true);
+                    startRecordSpaceTimer();
 
                     return full_target;
                 }
@@ -1109,6 +1315,7 @@ namespace Thetis
                     }
                     catch { }
 
+                    stopRecordSpaceTimer();
                     setRecordingState(false);
                     clearActiveRecordLocked();
                     return null;
@@ -1143,6 +1350,12 @@ namespace Thetis
                     if (remove_if_file_exists && File.Exists(full_target))
                     {
                         try { File.Delete(full_target); } catch { }
+                    }
+
+                    if (!OkToRecord(full_target))
+                    {
+                        error = "Not enough free space to start recording.";
+                        return null;
                     }
 
                     if (!Common.CanCreateFile(full_target))
@@ -1220,11 +1433,31 @@ namespace Thetis
                         _active_record_mp3_filename = Path.ChangeExtension(full_target, ".mp3");
                     }
 
-                    _pc_wave_in = new WaveInEvent();
-                    _pc_wave_in.DeviceNumber = pcAudioDeviceInputId;
-                    _pc_wave_in.WaveFormat = fmt;
-                    _pc_wave_in.BufferMilliseconds = 50;
-                    _pc_wave_in.NumberOfBuffers = 3;
+                    IWaveIn waveIn;
+
+                    if (pcAudioDeviceInputId >= PcAudioWasapiInputIdBase)
+                    {
+                        int idx = pcAudioDeviceInputId - PcAudioWasapiInputIdBase;
+                        MMDeviceEnumerator en = new MMDeviceEnumerator();
+                        MMDeviceCollection devs = en.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
+                        if (idx < 0 || idx >= devs.Count) throw new IndexOutOfRangeException("WASAPI input device index is out of range.");
+
+                        MMDevice dev = devs[idx];
+                        WasapiCapture c = new WasapiCapture(dev);
+                        c.WaveFormat = fmt;
+                        waveIn = c;
+                    }
+                    else
+                    {
+                        WaveInEvent w = new WaveInEvent();
+                        w.DeviceNumber = pcAudioDeviceInputId;
+                        w.WaveFormat = fmt;
+                        w.BufferMilliseconds = 50;
+                        w.NumberOfBuffers = 3;
+                        waveIn = w;
+                    }
+
+                    _pc_wave_in = waveIn;
                     _pc_wave_in.DataAvailable += onPcDataAvailable;
                     _pc_wave_in.RecordingStopped += onPcRecordingStopped;
 
@@ -1234,6 +1467,7 @@ namespace Thetis
 
                     _pc_wave_in.StartRecording();
                     setRecordingState(true);
+                    startRecordSpaceTimer();
 
                     return full_target;
                 }
@@ -1270,6 +1504,7 @@ namespace Thetis
                     }
                     catch { }
 
+                    stopRecordSpaceTimer();
                     setRecordingState(false);
                     clearActiveRecordLocked();
                     return null;
@@ -1334,6 +1569,7 @@ namespace Thetis
         public bool StopRecord(out string error)
         {
             error = null;
+            stopRecordSpaceTimer();
 
             lock (_sync)
             {
@@ -1378,8 +1614,95 @@ namespace Thetis
             storeRestoreSettings(false, false);
             return error == null;
         }
+        private void applyPcInputSourceStereoRemap(byte[] buffer, int bytesRecorded)
+        {
+            if (buffer == null) return;
+            if (bytesRecorded< 1) return;
 
-        public bool PlayFileViaWDSP(string play_id, string full_path, int wfw_id, out string error)
+            PCInputSource src = PCInputSource;
+            if (src == PCInputSource.Both) return;
+
+            int bytesPerSample;
+            if (BitDepthMode == AudioBitDepthMode.Pcm8) bytesPerSample = 1;
+            else if (BitDepthMode == AudioBitDepthMode.Pcm16) bytesPerSample = 2;
+            else if (BitDepthMode == AudioBitDepthMode.Pcm24) bytesPerSample = 3;
+            else bytesPerSample = 4;
+
+            int frameBytes = bytesPerSample * 2;
+            int i = 0;
+
+            if (src == PCInputSource.Left)
+            {
+                while (i + frameBytes - 1 < bytesRecorded)
+                {
+                    int s = 0;
+                    while (s<bytesPerSample)
+                    {
+                        buffer[i + bytesPerSample + s] = buffer[i + s];
+                        s++;
+                    }
+                    i += frameBytes;
+                }
+                return;
+            }
+
+            if (src == PCInputSource.Right)
+            {
+                while (i + frameBytes - 1 < bytesRecorded)
+                {
+                    int s = 0;
+                    while (s < bytesPerSample)
+                    {
+                        buffer[i + s] = buffer[i + bytesPerSample + s];
+                        s++;
+                    }
+                    i += frameBytes;
+                }
+            }
+        }
+        public bool CanBePlayed(string filepath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(filepath)) return false;
+
+                string error;
+                string fullPath = resolvePlayPath(filepath, out error);
+                if (fullPath == null) return false;
+
+                if (!File.Exists(fullPath)) return false;
+
+                string ext = (Path.GetExtension(fullPath) ?? string.Empty).ToLowerInvariant();
+
+                if (ext == ".wav")
+                {
+                    using (BinaryReader br = new BinaryReader(File.Open(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    {
+                        int formatTag;
+                        int sampleRate;
+                        int channels;
+                        int bitsPerSample;
+                        long dataStart;
+                        long dataLengthBytes;
+                        string headerError;
+
+                        if (!tryParseWaveHeader(br, out formatTag, out sampleRate, out channels, out bitsPerSample, out dataStart, out dataLengthBytes, out headerError)) return false;
+                        if (channels != 2) return false;
+                        if (sampleRate < 6000) return false;
+                        if (dataLengthBytes <= 0) return false;
+
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        public bool PlayFileViaWDSP(string play_id, string full_path, int wfw_id, out string error, double adjustGain_dB = 0, bool ignore_temp_changes = false)
         {
             bool ret = false;
             bool restore = false;
@@ -1436,12 +1759,14 @@ namespace Thetis
 
                     storeRestoreSettings(true, true);
 
-                    double mic = Audio.console.radio.GetDSPTX(0).MicGain;
-                    Audio.console.radio.GetDSPTX(0).MicGain = 0.0;
+                    double mic = Audio.MicPreamp;
+                    double wave = Audio.WavePreamp;
+                    double wave_adjust = Audio.WavePreampAdjust;
 
-                    activatePlaybackRecordSettings(true);
-
-                    Thread.Sleep(50);
+                    Audio.MicPreamp = 0.0;
+                    Audio.WavePreamp = 0.0;
+                    Audio.WavePreampAdjust = 0.0;
+                    activatePlaybackRecordSettings(true, ignore_temp_changes);
 
                     _active_playback_wfw_id = wfw_id;
                     _active_play_id = play_id ?? string.Empty;
@@ -1464,7 +1789,11 @@ namespace Thetis
                     Audio.WavePlayback = true;
                     setPlayingState(true);
 
-                    Audio.console.radio.GetDSPTX(0).MicGain = mic;
+                    Audio.MicPreamp = mic;
+
+                    // adjust gain
+                    Audio.WavePreamp = wave;
+                    Audio.WavePreampAdjust = Math.Pow(10.0, adjustGain_dB / 20.0);
 
                     ret = true;
                 }
@@ -1485,7 +1814,16 @@ namespace Thetis
             if (restore) storeRestoreSettings(false, true);
             return ret;
         }
+        private double adjustWavePreampByDB(double nonDBfloor, double db_adjust)
+        {
+            double db = 20.0 * Math.Log10(nonDBfloor);
 
+            double clamped = db + db_adjust;
+            if (clamped < -70.0) clamped = -70.0;
+            if (clamped > 70.0) clamped = 70.0;
+
+            return Math.Pow(10.0, clamped / 20.0);
+        }
         public bool PlayFileViaPCAudio(string play_id, string full_path, int pcAudioDeviceOutputId, out string error)
         {
             bool ret = false;
@@ -1518,6 +1856,11 @@ namespace Thetis
                             {
                                 if (tryParseWaveHeader(br, out int fmtTag, out int sr, out int ch, out int bps, out long ds, out long dl, out string hdrErr))
                                 {
+                                    if(ch != 2)
+                                    {
+                                        error = "File is not 2 channel.";
+                                        return false;
+                                    }
                                     refreshExistingJsonFromWavIfNeeded(play_id, fullPath, fmtTag, sr, ch, bps);
                                 }
                             }
@@ -1531,8 +1874,27 @@ namespace Thetis
 
                     _pc_audio_reader = new AudioFileReader(fullPath);
                     _pc_audio_reader.Volume = _pc_playback_gain;
-                    _pc_wave_out = new WaveOutEvent();
-                    _pc_wave_out.DeviceNumber = pcAudioDeviceOutputId;
+
+                    IWavePlayer waveOut;
+
+                    if (pcAudioDeviceOutputId >= PcAudioWasapiOutputIdBase)
+                    {
+                        int idx = pcAudioDeviceOutputId - PcAudioWasapiOutputIdBase;
+                        MMDeviceEnumerator en = new MMDeviceEnumerator();
+                        MMDeviceCollection devs = en.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+                        if (idx < 0 || idx >= devs.Count) throw new IndexOutOfRangeException("WASAPI output device index is out of range.");
+
+                        MMDevice dev = devs[idx];
+                        waveOut = new WasapiOut(dev, AudioClientShareMode.Shared, false, 200);
+                    }
+                    else
+                    {
+                        WaveOutEvent w = new WaveOutEvent();
+                        w.DeviceNumber = pcAudioDeviceOutputId;
+                        waveOut = w;
+                    }
+
+                    _pc_wave_out = waveOut;
                     _pc_wave_out.PlaybackStopped += pcWaveOut_PlaybackStopped;
                     _pc_wave_out.Init(_pc_audio_reader);
                     _pc_wave_out.Play();
@@ -1631,7 +1993,7 @@ namespace Thetis
 
             lock (_sync)
             {
-                if (!_is_playing) return true;                
+                if (!_is_playing) return true;
                 try
                 {
                     if (_active_playback_wfw_id >= 0)
@@ -1658,8 +2020,8 @@ namespace Thetis
                     try { cleanupPcPlayback(); } catch { }
                 }
             }
-            
-            if(wdsp) storeRestoreSettings(false, true);
+
+            if (wdsp) storeRestoreSettings(false, true);
             setPlayingState(false);
             return error == null;
         }
@@ -1695,7 +2057,9 @@ namespace Thetis
                     return;
                 }
 
-                if (gain == 1.0f)
+                PCInputSource src = PCInputSource;
+                
+                if (gain == 1.0f && src == PCInputSource.Both)
                 {
                     _pc_wave_writer.Write(e.Buffer, 0, e.BytesRecorded);
                     _pc_wave_writer.Flush();
@@ -1708,6 +2072,18 @@ namespace Thetis
                 }
 
                 Buffer.BlockCopy(e.Buffer, 0, _pc_record_gain_buffer, 0, e.BytesRecorded);
+
+                if (src != PCInputSource.Both)
+                {
+                    applyPcInputSourceStereoRemap(_pc_record_gain_buffer, e.BytesRecorded);
+                }
+                
+                if (gain == 1.0f)
+                {
+                    _pc_wave_writer.Write(_pc_record_gain_buffer, 0, e.BytesRecorded);
+                    _pc_wave_writer.Flush();
+                    return;
+                }
 
                 int max = e.BytesRecorded;
 
@@ -1883,6 +2259,8 @@ namespace Thetis
         {
             Action a = delegate
             {
+                stopRecordSpaceTimer();
+
                 if (details != null)
                 {
                     details.UtcTime = ensureUtc(details.UtcTime);
@@ -1986,6 +2364,7 @@ namespace Thetis
                 m.frequency = details.Frequency ?? "";
                 m.mode = details.Mode ?? "";
                 m.band = details.Band ?? "";
+                //m.ddcfrequency = details.DDCFrequency ?? "";
 
                 m.wav_file = details.WavFile ?? "";
                 m.wav_file_size_bytes = details.WavFileSizeBytes;
@@ -2350,6 +2729,7 @@ namespace Thetis
             public string frequency { get; set; }
             public string mode { get; set; }
             public string band { get; set; }
+            //public string ddcfrequency { get; set; }
 
             public string wav_file { get; set; }
             public long? wav_file_size_bytes { get; set; }
@@ -2505,6 +2885,9 @@ namespace Thetis
             _id = wfw_id;
             _file = file;
             _finished = finished;
+
+            WaveThing.wrecorder[_id].RxPre = recordRxPreProcessed;
+            WaveThing.wrecorder[_id].TxPre = recordTxPreProcessed;
 
             if (recordRxPreProcessed)
             {

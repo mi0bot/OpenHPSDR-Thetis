@@ -851,7 +851,20 @@ namespace Thetis
         #region GANYMEDE amplifier protection
 
 
-        private bool GanymedePresent = false;
+        private bool _ganymedePresent = false;
+        private bool GanymedePresent
+        {
+            get { return _ganymedePresent; }
+            set
+            {
+                _ganymedePresent = value;
+                if (!_ganymedePresent)
+                {
+                    _ganymede_pa_issue = false;
+                    PAStatusIndicator = PAstatusIndicatorState.NotUsed;
+                }
+            }
+        }
         private int GanymedeTripState = 0;                      // amplifier trip
 
         //
@@ -898,9 +911,14 @@ namespace Thetis
 
         // for now, put message in SETUP Apollo with current amplifier state
         // ideally when it has been tripped we should remove PTT too.
+        private volatile bool _ganymede_pa_issue = false;
         public void CATHandleAmplifierTripMessage(int TripState)
         {
             GanymedePresent = true;
+
+            _ganymede_pa_issue = TripState != 0; // this will also prevent MOX being re-enabled
+            if (_ganymede_pa_issue && MOX) MOX = false; //if there is a fault, undo mox if active
+
             switch (TripState)
             {
                 case 0:
@@ -925,7 +943,7 @@ namespace Thetis
                     PAStatusIndicator = PAstatusIndicatorState.Resettable;
                     break;
             }
-            SetupForm.GanymedeStatus = GetPAStatusText(PAStatusIndicator);
+            SetupForm.GanymedeStatus = GetPAStatusText(PAStatusIndicator);            
         }
 
         // send a CAT message to Ganymede to reset the tripped state
@@ -3955,9 +3973,10 @@ namespace Thetis
                     break;
 
                 case EButtonBarActions.eBBEqualiserForm:           // show equaliser form
-                    if (EQForm == null || EQForm.IsDisposed)
-                        EQForm = new EQForm(this);
-                    Invoke(new MethodInvoker(EQForm.Show));
+                    //if (EQForm == null || EQForm.IsDisposed)
+                    //    EQForm = new EQForm(this);
+                    //Invoke(new MethodInvoker(EQForm.Show));
+                    equalizerToolStripMenuItem_Click(this, EventArgs.Empty);
                     break;
 
                 case EButtonBarActions.eBBDisplaySettingsForm:    // show the display settings form
