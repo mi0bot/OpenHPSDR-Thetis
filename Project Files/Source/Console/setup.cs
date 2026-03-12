@@ -27919,24 +27919,18 @@ namespace Thetis
         private void chkConsoleDarkModeTitleBar_CheckedChanged(object sender, EventArgs e)
         {
             if (initializing) return;
-
-            bool dark_mode = chkConsoleDarkModeTitleBar.Checked;
-
             if (console != null)
             {
-                bool consoleOk = Common.UseImmersiveDarkMode(console.Handle, dark_mode);
-
+                bool consoleOk = Common.UseImmersiveDarkMode(console.Handle, chkConsoleDarkModeTitleBar.Checked);
                 if (sender != this) // only invalidate if user changed
                 {
                     if (consoleOk) console.Invalidate();
-                }
 
-                if (console.diversityForm != null)
-                {
-                    console.diversityForm.DarkMode = dark_mode;
+                    if (console.diversityForm != null)
+                    {
+                        console.diversityForm.DarkMode = chkConsoleDarkModeTitleBar.Checked;
+                    }
                 }
-
-                console.DarkModeChangedHandlers?.Invoke(dark_mode);
             }
         }
         public bool DarkMode
@@ -38033,6 +38027,12 @@ namespace Thetis
             Display.ActivePeakInTxRX2 = chkActivePeakRX2_tx.Checked;
         }
 
+        // MI0BOT: Controls if the audio over the Over Protocol 1. There was a fudge to correct a problem in some HPSDR hardware
+        private void chkSwapAudioChannels_CheckedChanged(object sender, EventArgs e)
+        {
+            int swap = chkSwapAudioChannels.Checked ? 1 : 0;
+            NetworkIO.SwapAudioChannels(swap);
+        }
         // CFC para
         private bool _cfc_legacy = true;
         private void chkCFC_legacy_CheckedChanged(object sender, EventArgs e)
