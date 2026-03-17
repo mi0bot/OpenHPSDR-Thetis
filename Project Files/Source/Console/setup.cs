@@ -7327,12 +7327,12 @@ namespace Thetis
                 console.InitFFTFillTime(1);//[2.10.1.0]MW0LGE
             }
 
+            if (console != null) console.SetHWSampleRateSetting(1, new_rate);
+
             if (console != null && ((new_rate != old_rate) || initializing || m_bForceAudio))
             {
                 console.HWSampleRateChangedHandlers?.Invoke(1, old_rate, new_rate);
             }
-
-            if (console != null) console.SetHWSampleRateSetting(1, new_rate);
         }
 
         private void comboAudioSampleRateRX2_SelectedIndexChanged(object sender, System.EventArgs e)
@@ -7406,12 +7406,12 @@ namespace Thetis
 
             console.InitFFTFillTime(2);//[2.10.1.0]MW0LGE
 
+            if (console != null) console.SetHWSampleRateSetting(2, new_rate);
+
             if (console != null && ((new_rate != old_rate) || initializing || m_bForceAudio))
             {
                 console.HWSampleRateChangedHandlers?.Invoke(2, old_rate, new_rate);
             }
-
-            if (console != null) console.SetHWSampleRateSetting(2, new_rate);
         }
 
         private void comboAudioSampleRate2_SelectedIndexChanged(object sender, System.EventArgs e)
@@ -23362,7 +23362,7 @@ namespace Thetis
         }
         private void chkForgetRX2VfoBVFOinfo_CheckedChanged(object sender, EventArgs e)
         {
-            if (console.TCIServer != null) console.TCIServer.ReplaceRX2VFObToVFOa = chkForgetRX2VfoBVFOinfo.Checked;
+            if (console.TCIServer != null) console.TCIServer.ReplaceRX2VFObIfCopyBtoA = chkForgetRX2VfoBVFOinfo.Checked;
         }
         private void chkUseRX1vfoaForRX2vfoa_CheckedChanged(object sender, EventArgs e)
         {
@@ -33220,11 +33220,13 @@ namespace Thetis
                 ignore |= tmp.Contains(call, StringComparison.OrdinalIgnoreCase);
             }
 
+            #if !DEBUG
             if (portaudio_issue || (!cmasio_config_flag && !ignore))
             {
                 tcAudio.TabPages.Remove(tpCMAsio);
                 return;
             }
+            #endif
 
             _ignore_cmasio_settings_change = true; // prevent any changes here from writing to registry
 
@@ -38108,6 +38110,67 @@ namespace Thetis
             tbCFCPRECOMP_Scroll(this, EventArgs.Empty);
             tbCFCPEG_Scroll(this, EventArgs.Empty);
             setCFCProfile(this, EventArgs.Empty);
+        }
+
+        private void chkTCISwapIQ_CheckedChanged(object sender, EventArgs e)
+        {
+            if (console != null && console.TCIServer != null) console.TCIServer.IQSwap = chkTCISwapIQ.Checked;
+        }
+
+        private void chkTCIAlwaysStreamIQ_CheckedChanged(object sender, EventArgs e)
+        {
+            if (console != null && console.TCIServer != null) console.TCIServer.AlwaysStreamIQ = chkTCIAlwaysStreamIQ.Checked;
+        }
+
+        private void radTCITXchannel_CheckedChanged(object sender, EventArgs e)
+        {
+            if (console == null || console.TCIServer == null) return;
+
+            if (radTCITXchannel_L.Checked) 
+            {
+                console.TCIServer.TXStereoInputMode = TCITxStereoInputMode.Left;
+            }
+            else if (radTCITXchannel_R.Checked)
+            {
+                console.TCIServer.TXStereoInputMode = TCITxStereoInputMode.Right;
+            }
+            else
+            {
+                console.TCIServer.TXStereoInputMode = TCITxStereoInputMode.Both;
+            }
+        }
+
+        private void radWaterfall_timelab_CheckedChanged(object sender, EventArgs e)
+        {
+            if(radWaterfall_timelab_none.Checked)
+            {
+                Display.ShowWaterfallTime = WaterfallTimePosition.NONE;
+            }
+            else if (radWaterfall_timelab_left.Checked)
+            {
+                Display.ShowWaterfallTime = WaterfallTimePosition.LEFT;
+            }
+            else if (radWaterfall_timelab_right.Checked)
+            {
+                Display.ShowWaterfallTime = WaterfallTimePosition.RIGHT;
+            }
+        }
+
+        private void radWaterfall_timelab_time_CheckedChanged(object sender, EventArgs e)
+        {
+            if(radWaterfall_timelab_utc.Checked)
+            {
+                Display.WaterfallTime = WaterfallTimeMode.UTC;
+            }
+            else if (radWaterfall_timelab_local.Checked)
+            {
+                Display.WaterfallTime = WaterfallTimeMode.LOCAL;
+            }
+        }
+
+        private void chkTCI_spot_flags_CheckedChanged(object sender, EventArgs e)
+        {
+            Display.ShowSpotFlags = chkTCI_spot_flags.Checked;
         }
         // END CFC para
     }

@@ -3156,6 +3156,13 @@
             this.tpAppearance = new System.Windows.Forms.TabPage();
             this.tcAppearance = new System.Windows.Forms.TabControl();
             this.tpAppearanceGeneral = new System.Windows.Forms.TabPage();
+            this.groupBoxTS70 = new System.Windows.Forms.GroupBoxTS();
+            this.panelTS16 = new System.Windows.Forms.PanelTS();
+            this.radWaterfall_timelab_local = new System.Windows.Forms.RadioButtonTS();
+            this.radWaterfall_timelab_utc = new System.Windows.Forms.RadioButtonTS();
+            this.radWaterfall_timelab_right = new System.Windows.Forms.RadioButtonTS();
+            this.radWaterfall_timelab_left = new System.Windows.Forms.RadioButtonTS();
+            this.radWaterfall_timelab_none = new System.Windows.Forms.RadioButtonTS();
             this.groupBoxTS38 = new System.Windows.Forms.GroupBoxTS();
             this.clrbtnTXAttenuationBackground = new Thetis.ColorButton();
             this.labelTS195 = new System.Windows.Forms.LabelTS();
@@ -3654,6 +3661,8 @@
             this.comboCATstopbits = new System.Windows.Forms.ComboBoxTS();
             this.tpTCITCPIPN1MM = new System.Windows.Forms.TabPage();
             this.grpTCIServer = new System.Windows.Forms.GroupBoxTS();
+            this.chkTCI_spot_flags = new System.Windows.Forms.CheckBoxTS();
+            this.panelTS15 = new System.Windows.Forms.PanelTS();
             this.lblToggleToUseTCI = new System.Windows.Forms.LabelTS();
             this.chkTCIServerListening = new System.Windows.Forms.CheckBoxTS();
             this.btnShowLog = new System.Windows.Forms.ButtonTS();
@@ -3715,6 +3724,13 @@
             this.txtN1MMSendTo = new System.Windows.Forms.TextBoxTS();
             this.chkN1MMEnableRX2 = new System.Windows.Forms.CheckBoxTS();
             this.chkN1MMEnableRX1 = new System.Windows.Forms.CheckBoxTS();
+            this.groupBoxTS69 = new System.Windows.Forms.GroupBoxTS();
+            this.radTCITXchannel_both = new System.Windows.Forms.RadioButtonTS();
+            this.radTCITXchannel_R = new System.Windows.Forms.RadioButtonTS();
+            this.radTCITXchannel_L = new System.Windows.Forms.RadioButtonTS();
+            this.labelTS661 = new System.Windows.Forms.LabelTS();
+            this.chkTCISwapIQ = new System.Windows.Forms.CheckBoxTS();
+            this.chkTCIAlwaysStreamIQ = new System.Windows.Forms.CheckBoxTS();
             this.tbMIDIcat = new System.Windows.Forms.TabPage();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.chkMidiControlIDincludesStatus = new System.Windows.Forms.CheckBoxTS();
@@ -5296,6 +5312,8 @@
             this.tpAppearance.SuspendLayout();
             this.tcAppearance.SuspendLayout();
             this.tpAppearanceGeneral.SuspendLayout();
+            this.groupBoxTS70.SuspendLayout();
+            this.panelTS16.SuspendLayout();
             this.groupBoxTS38.SuspendLayout();
             this.groupBoxTS31.SuspendLayout();
             this.groupBoxTS12.SuspendLayout();
@@ -5402,6 +5420,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.udN1MMSendRate)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udN1MMRX2Scaling)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udN1MMRX1Scaling)).BeginInit();
+            this.groupBoxTS69.SuspendLayout();
             this.tbMIDIcat.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.udUpdatesPerStepMin)).BeginInit();
@@ -52180,6 +52199,7 @@
             // tpAppearanceGeneral
             // 
             this.tpAppearanceGeneral.BackColor = System.Drawing.SystemColors.Control;
+            this.tpAppearanceGeneral.Controls.Add(this.groupBoxTS70);
             this.tpAppearanceGeneral.Controls.Add(this.groupBoxTS38);
             this.tpAppearanceGeneral.Controls.Add(this.groupBoxTS31);
             this.tpAppearanceGeneral.Controls.Add(this.groupBoxTS12);
@@ -52193,6 +52213,93 @@
             this.tpAppearanceGeneral.Size = new System.Drawing.Size(724, 410);
             this.tpAppearanceGeneral.TabIndex = 0;
             this.tpAppearanceGeneral.Text = "General";
+            // 
+            // groupBoxTS70
+            // 
+            this.groupBoxTS70.Controls.Add(this.panelTS16);
+            this.groupBoxTS70.Controls.Add(this.radWaterfall_timelab_right);
+            this.groupBoxTS70.Controls.Add(this.radWaterfall_timelab_left);
+            this.groupBoxTS70.Controls.Add(this.radWaterfall_timelab_none);
+            this.groupBoxTS70.Location = new System.Drawing.Point(8, 269);
+            this.groupBoxTS70.Name = "groupBoxTS70";
+            this.groupBoxTS70.Size = new System.Drawing.Size(167, 72);
+            this.groupBoxTS70.TabIndex = 94;
+            this.groupBoxTS70.TabStop = false;
+            this.groupBoxTS70.Text = "Waterfall Time Labels";
+            // 
+            // panelTS16
+            // 
+            this.panelTS16.AutoScrollMargin = new System.Drawing.Size(0, 0);
+            this.panelTS16.AutoScrollMinSize = new System.Drawing.Size(0, 0);
+            this.panelTS16.Controls.Add(this.radWaterfall_timelab_local);
+            this.panelTS16.Controls.Add(this.radWaterfall_timelab_utc);
+            this.panelTS16.Location = new System.Drawing.Point(3, 42);
+            this.panelTS16.Name = "panelTS16";
+            this.panelTS16.Size = new System.Drawing.Size(121, 25);
+            this.panelTS16.TabIndex = 3;
+            // 
+            // radWaterfall_timelab_local
+            // 
+            this.radWaterfall_timelab_local.AutoSize = true;
+            this.radWaterfall_timelab_local.Image = null;
+            this.radWaterfall_timelab_local.Location = new System.Drawing.Point(56, 3);
+            this.radWaterfall_timelab_local.Name = "radWaterfall_timelab_local";
+            this.radWaterfall_timelab_local.Size = new System.Drawing.Size(51, 17);
+            this.radWaterfall_timelab_local.TabIndex = 2;
+            this.radWaterfall_timelab_local.Text = "Local";
+            this.radWaterfall_timelab_local.UseVisualStyleBackColor = true;
+            // 
+            // radWaterfall_timelab_utc
+            // 
+            this.radWaterfall_timelab_utc.AutoSize = true;
+            this.radWaterfall_timelab_utc.Checked = true;
+            this.radWaterfall_timelab_utc.Image = null;
+            this.radWaterfall_timelab_utc.Location = new System.Drawing.Point(3, 3);
+            this.radWaterfall_timelab_utc.Name = "radWaterfall_timelab_utc";
+            this.radWaterfall_timelab_utc.Size = new System.Drawing.Size(47, 17);
+            this.radWaterfall_timelab_utc.TabIndex = 1;
+            this.radWaterfall_timelab_utc.TabStop = true;
+            this.radWaterfall_timelab_utc.Text = "UTC";
+            this.radWaterfall_timelab_utc.UseVisualStyleBackColor = true;
+            this.radWaterfall_timelab_utc.CheckedChanged += new System.EventHandler(this.radWaterfall_timelab_time_CheckedChanged);
+            // 
+            // radWaterfall_timelab_right
+            // 
+            this.radWaterfall_timelab_right.AutoSize = true;
+            this.radWaterfall_timelab_right.Image = null;
+            this.radWaterfall_timelab_right.Location = new System.Drawing.Point(112, 19);
+            this.radWaterfall_timelab_right.Name = "radWaterfall_timelab_right";
+            this.radWaterfall_timelab_right.Size = new System.Drawing.Size(50, 17);
+            this.radWaterfall_timelab_right.TabIndex = 2;
+            this.radWaterfall_timelab_right.Text = "Right";
+            this.radWaterfall_timelab_right.UseVisualStyleBackColor = true;
+            this.radWaterfall_timelab_right.CheckedChanged += new System.EventHandler(this.radWaterfall_timelab_CheckedChanged);
+            // 
+            // radWaterfall_timelab_left
+            // 
+            this.radWaterfall_timelab_left.AutoSize = true;
+            this.radWaterfall_timelab_left.Checked = true;
+            this.radWaterfall_timelab_left.Image = null;
+            this.radWaterfall_timelab_left.Location = new System.Drawing.Point(63, 19);
+            this.radWaterfall_timelab_left.Name = "radWaterfall_timelab_left";
+            this.radWaterfall_timelab_left.Size = new System.Drawing.Size(43, 17);
+            this.radWaterfall_timelab_left.TabIndex = 1;
+            this.radWaterfall_timelab_left.TabStop = true;
+            this.radWaterfall_timelab_left.Text = "Left";
+            this.radWaterfall_timelab_left.UseVisualStyleBackColor = true;
+            this.radWaterfall_timelab_left.CheckedChanged += new System.EventHandler(this.radWaterfall_timelab_CheckedChanged);
+            // 
+            // radWaterfall_timelab_none
+            // 
+            this.radWaterfall_timelab_none.AutoSize = true;
+            this.radWaterfall_timelab_none.Image = null;
+            this.radWaterfall_timelab_none.Location = new System.Drawing.Point(6, 19);
+            this.radWaterfall_timelab_none.Name = "radWaterfall_timelab_none";
+            this.radWaterfall_timelab_none.Size = new System.Drawing.Size(51, 17);
+            this.radWaterfall_timelab_none.TabIndex = 0;
+            this.radWaterfall_timelab_none.Text = "None";
+            this.radWaterfall_timelab_none.UseVisualStyleBackColor = true;
+            this.radWaterfall_timelab_none.CheckedChanged += new System.EventHandler(this.radWaterfall_timelab_CheckedChanged);
             // 
             // groupBoxTS38
             // 
@@ -58576,6 +58683,7 @@
             this.tpTCITCPIPN1MM.Controls.Add(this.grpTCIServer);
             this.tpTCITCPIPN1MM.Controls.Add(this.grpTCPIPcatServer);
             this.tpTCITCPIPN1MM.Controls.Add(this.groupBoxTS16);
+            this.tpTCITCPIPN1MM.Controls.Add(this.groupBoxTS69);
             this.tpTCITCPIPN1MM.Location = new System.Drawing.Point(4, 22);
             this.tpTCITCPIPN1MM.Name = "tpTCITCPIPN1MM";
             this.tpTCITCPIPN1MM.Padding = new System.Windows.Forms.Padding(3);
@@ -58585,6 +58693,8 @@
             // 
             // grpTCIServer
             // 
+            this.grpTCIServer.Controls.Add(this.chkTCI_spot_flags);
+            this.grpTCIServer.Controls.Add(this.panelTS15);
             this.grpTCIServer.Controls.Add(this.lblToggleToUseTCI);
             this.grpTCIServer.Controls.Add(this.chkTCIServerListening);
             this.grpTCIServer.Controls.Add(this.btnShowLog);
@@ -58623,6 +58733,31 @@
             this.grpTCIServer.TabIndex = 98;
             this.grpTCIServer.TabStop = false;
             this.grpTCIServer.Text = "TCI Server (0 clients)";
+            // 
+            // chkTCI_spot_flags
+            // 
+            this.chkTCI_spot_flags.AutoSize = true;
+            this.chkTCI_spot_flags.Checked = true;
+            this.chkTCI_spot_flags.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkTCI_spot_flags.Image = null;
+            this.chkTCI_spot_flags.Location = new System.Drawing.Point(316, 222);
+            this.chkTCI_spot_flags.Name = "chkTCI_spot_flags";
+            this.chkTCI_spot_flags.Size = new System.Drawing.Size(51, 17);
+            this.chkTCI_spot_flags.TabIndex = 116;
+            this.chkTCI_spot_flags.Text = "Flags";
+            this.toolTip1.SetToolTip(this.chkTCI_spot_flags, "Show TCI spot flags if the flag or flagspotter info has been provided in the json" +
+        " payload");
+            this.chkTCI_spot_flags.UseVisualStyleBackColor = true;
+            this.chkTCI_spot_flags.CheckedChanged += new System.EventHandler(this.chkTCI_spot_flags_CheckedChanged);
+            // 
+            // panelTS15
+            // 
+            this.panelTS15.AutoScrollMargin = new System.Drawing.Size(0, 0);
+            this.panelTS15.AutoScrollMinSize = new System.Drawing.Size(0, 0);
+            this.panelTS15.Location = new System.Drawing.Point(361, 298);
+            this.panelTS15.Name = "panelTS15";
+            this.panelTS15.Size = new System.Drawing.Size(23, 89);
+            this.panelTS15.TabIndex = 115;
             // 
             // lblToggleToUseTCI
             // 
@@ -58773,10 +58908,10 @@
             // btnClearTCISpotsSWL
             // 
             this.btnClearTCISpotsSWL.Image = null;
-            this.btnClearTCISpotsSWL.Location = new System.Drawing.Point(267, 222);
+            this.btnClearTCISpotsSWL.Location = new System.Drawing.Point(254, 222);
             this.btnClearTCISpotsSWL.Name = "btnClearTCISpotsSWL";
             this.btnClearTCISpotsSWL.Selectable = true;
-            this.btnClearTCISpotsSWL.Size = new System.Drawing.Size(73, 39);
+            this.btnClearTCISpotsSWL.Size = new System.Drawing.Size(56, 39);
             this.btnClearTCISpotsSWL.TabIndex = 102;
             this.btnClearTCISpotsSWL.Text = "Clear SWL";
             this.btnClearTCISpotsSWL.UseVisualStyleBackColor = true;
@@ -58815,9 +58950,9 @@
             this.btnClearTCISpots.Location = new System.Drawing.Point(184, 222);
             this.btnClearTCISpots.Name = "btnClearTCISpots";
             this.btnClearTCISpots.Selectable = true;
-            this.btnClearTCISpots.Size = new System.Drawing.Size(77, 39);
+            this.btnClearTCISpots.Size = new System.Drawing.Size(68, 39);
             this.btnClearTCISpots.TabIndex = 99;
-            this.btnClearTCISpots.Text = "Clear Non SWL";
+            this.btnClearTCISpots.Text = "Clear non SWL";
             this.btnClearTCISpots.UseVisualStyleBackColor = true;
             this.btnClearTCISpots.Click += new System.EventHandler(this.btnClearTCISpots_Click);
             // 
@@ -59483,6 +59618,98 @@
             this.chkN1MMEnableRX1.Text = "Enable RX1";
             this.chkN1MMEnableRX1.UseVisualStyleBackColor = true;
             this.chkN1MMEnableRX1.CheckedChanged += new System.EventHandler(this.chkN1MMEnableRX1_CheckedChanged);
+            // 
+            // groupBoxTS69
+            // 
+            this.groupBoxTS69.Controls.Add(this.radTCITXchannel_both);
+            this.groupBoxTS69.Controls.Add(this.radTCITXchannel_R);
+            this.groupBoxTS69.Controls.Add(this.radTCITXchannel_L);
+            this.groupBoxTS69.Controls.Add(this.labelTS661);
+            this.groupBoxTS69.Controls.Add(this.chkTCISwapIQ);
+            this.groupBoxTS69.Controls.Add(this.chkTCIAlwaysStreamIQ);
+            this.groupBoxTS69.Location = new System.Drawing.Point(386, 298);
+            this.groupBoxTS69.Name = "groupBoxTS69";
+            this.groupBoxTS69.Size = new System.Drawing.Size(330, 99);
+            this.groupBoxTS69.TabIndex = 99;
+            this.groupBoxTS69.TabStop = false;
+            // 
+            // radTCITXchannel_both
+            // 
+            this.radTCITXchannel_both.AutoSize = true;
+            this.radTCITXchannel_both.Checked = true;
+            this.radTCITXchannel_both.Image = null;
+            this.radTCITXchannel_both.Location = new System.Drawing.Point(194, 56);
+            this.radTCITXchannel_both.Name = "radTCITXchannel_both";
+            this.radTCITXchannel_both.Size = new System.Drawing.Size(47, 17);
+            this.radTCITXchannel_both.TabIndex = 118;
+            this.radTCITXchannel_both.TabStop = true;
+            this.radTCITXchannel_both.Text = "Both";
+            this.toolTip1.SetToolTip(this.radTCITXchannel_both, "Use both channels of the inbound TCI audio stream (default)");
+            this.radTCITXchannel_both.UseVisualStyleBackColor = true;
+            // 
+            // radTCITXchannel_R
+            // 
+            this.radTCITXchannel_R.AutoSize = true;
+            this.radTCITXchannel_R.Image = null;
+            this.radTCITXchannel_R.Location = new System.Drawing.Point(155, 56);
+            this.radTCITXchannel_R.Name = "radTCITXchannel_R";
+            this.radTCITXchannel_R.Size = new System.Drawing.Size(33, 17);
+            this.radTCITXchannel_R.TabIndex = 117;
+            this.radTCITXchannel_R.Text = "R";
+            this.toolTip1.SetToolTip(this.radTCITXchannel_R, "Use the right channel of the inbound TCI audio stream");
+            this.radTCITXchannel_R.UseVisualStyleBackColor = true;
+            // 
+            // radTCITXchannel_L
+            // 
+            this.radTCITXchannel_L.AutoSize = true;
+            this.radTCITXchannel_L.Image = null;
+            this.radTCITXchannel_L.Location = new System.Drawing.Point(118, 56);
+            this.radTCITXchannel_L.Name = "radTCITXchannel_L";
+            this.radTCITXchannel_L.Size = new System.Drawing.Size(31, 17);
+            this.radTCITXchannel_L.TabIndex = 116;
+            this.radTCITXchannel_L.Text = "L";
+            this.toolTip1.SetToolTip(this.radTCITXchannel_L, "Use the left channel of the inbound TCI audio stream");
+            this.radTCITXchannel_L.UseVisualStyleBackColor = true;
+            this.radTCITXchannel_L.CheckedChanged += new System.EventHandler(this.radTCITXchannel_CheckedChanged);
+            // 
+            // labelTS661
+            // 
+            this.labelTS661.AutoSize = true;
+            this.labelTS661.Image = null;
+            this.labelTS661.Location = new System.Drawing.Point(7, 58);
+            this.labelTS661.Name = "labelTS661";
+            this.labelTS661.Size = new System.Drawing.Size(97, 13);
+            this.labelTS661.TabIndex = 115;
+            this.labelTS661.Text = "TX source channel";
+            // 
+            // chkTCISwapIQ
+            // 
+            this.chkTCISwapIQ.AutoSize = true;
+            this.chkTCISwapIQ.Checked = true;
+            this.chkTCISwapIQ.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkTCISwapIQ.Image = null;
+            this.chkTCISwapIQ.Location = new System.Drawing.Point(6, 19);
+            this.chkTCISwapIQ.Name = "chkTCISwapIQ";
+            this.chkTCISwapIQ.Size = new System.Drawing.Size(67, 17);
+            this.chkTCISwapIQ.TabIndex = 113;
+            this.chkTCISwapIQ.Text = "Swap IQ";
+            this.toolTip1.SetToolTip(this.chkTCISwapIQ, "Swap IQ. This should normally be on.");
+            this.chkTCISwapIQ.UseVisualStyleBackColor = true;
+            this.chkTCISwapIQ.CheckedChanged += new System.EventHandler(this.chkTCISwapIQ_CheckedChanged);
+            // 
+            // chkTCIAlwaysStreamIQ
+            // 
+            this.chkTCIAlwaysStreamIQ.AutoSize = true;
+            this.chkTCIAlwaysStreamIQ.Image = null;
+            this.chkTCIAlwaysStreamIQ.Location = new System.Drawing.Point(6, 38);
+            this.chkTCIAlwaysStreamIQ.Name = "chkTCIAlwaysStreamIQ";
+            this.chkTCIAlwaysStreamIQ.Size = new System.Drawing.Size(107, 17);
+            this.chkTCIAlwaysStreamIQ.TabIndex = 114;
+            this.chkTCIAlwaysStreamIQ.Text = "Always stream IQ";
+            this.toolTip1.SetToolTip(this.chkTCIAlwaysStreamIQ, "Some older software do ot sent IQ_START so IQ streaming will not start.\r\nUse this" +
+        " option to always stream it.");
+            this.chkTCIAlwaysStreamIQ.UseVisualStyleBackColor = true;
+            this.chkTCIAlwaysStreamIQ.CheckedChanged += new System.EventHandler(this.chkTCIAlwaysStreamIQ_CheckedChanged);
             // 
             // tbMIDIcat
             // 
@@ -72066,6 +72293,10 @@
             this.tpAppearance.ResumeLayout(false);
             this.tcAppearance.ResumeLayout(false);
             this.tpAppearanceGeneral.ResumeLayout(false);
+            this.groupBoxTS70.ResumeLayout(false);
+            this.groupBoxTS70.PerformLayout();
+            this.panelTS16.ResumeLayout(false);
+            this.panelTS16.PerformLayout();
             this.groupBoxTS38.ResumeLayout(false);
             this.groupBoxTS31.ResumeLayout(false);
             this.groupBoxTS31.PerformLayout();
@@ -72207,6 +72438,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.udN1MMSendRate)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.udN1MMRX2Scaling)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.udN1MMRX1Scaling)).EndInit();
+            this.groupBoxTS69.ResumeLayout(false);
+            this.groupBoxTS69.PerformLayout();
             this.tbMIDIcat.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -76923,5 +77156,21 @@
         private PanelTS panelTS9;
         private RadioButtonTS chkCBlock_after_rx2;
         private RadioButtonTS chkCBlock_before_rx2;
+        private CheckBoxTS chkTCIAlwaysStreamIQ;
+        private CheckBoxTS chkTCISwapIQ;
+        private PanelTS panelTS15;
+        private GroupBoxTS groupBoxTS69;
+        private RadioButtonTS radTCITXchannel_both;
+        private RadioButtonTS radTCITXchannel_R;
+        private RadioButtonTS radTCITXchannel_L;
+        private LabelTS labelTS661;
+        private GroupBoxTS groupBoxTS70;
+        private PanelTS panelTS16;
+        private RadioButtonTS radWaterfall_timelab_local;
+        private RadioButtonTS radWaterfall_timelab_utc;
+        private RadioButtonTS radWaterfall_timelab_right;
+        private RadioButtonTS radWaterfall_timelab_left;
+        private RadioButtonTS radWaterfall_timelab_none;
+        private CheckBoxTS chkTCI_spot_flags;
     }
 }
