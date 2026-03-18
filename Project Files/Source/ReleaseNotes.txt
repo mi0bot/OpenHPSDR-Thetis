@@ -51,4 +51,5 @@ Please report any bugs on [GitHub here](https://github.com/mi0bot/OpenHPSDR-Thet
 - [fix] fixed issues with 40/30 and 12/10 bfp ranges in setup causing crashes
 - [fix] fixed issue where some modes had spaces in the TCI modulation outbound message
 - [fix] TCI server can now handle concatenated TCI commands
+- [fix] if within 15 pixels of the top of RX1/RX2 display areas, the cursor changes to EW and you can drag left/right. Filter edges and bandstacks are now not considered in this area and as such dragging of the spectrum will occur if over a bandstack for example
 
