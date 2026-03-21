@@ -709,15 +709,17 @@ namespace Thetis
         }
         private static void OnBandChangeHandler(int rx, Band oldBand, Band newBand)
         {
+            setCurrentWaterfallBand(rx, newBand);
+
             if (rx == 1)
             {
                 FastAttackNoiseFloorRX1 = true;
-                _RX1waterfallPreviousMinValue = 20;
+                _RX1waterfallPreviousMinValue = getWaterfallCachedPreviousMinOrFloor(1, false);
             }
             else
             {
                 FastAttackNoiseFloorRX2 = true;
-                _RX2waterfallPreviousMinValue = 20;
+                _RX2waterfallPreviousMinValue = getWaterfallCachedPreviousMinOrFloor(2, false);
             }
         }
 
@@ -1437,6 +1439,15 @@ namespace Thetis
                 {
                     if (value != _old_mox)
                     {
+                        bool rx1WillBeTx = value && (!_tx_on_vfob || (_tx_on_vfob && !_rx2_enabled));
+                        _RX1waterfallPreviousMinValue = getWaterfallCachedPreviousMinOrFloor(1, rx1WillBeTx);
+
+                        if (_rx2_enabled)
+                        {
+                            bool rx2WillBeTx = value && (_tx_on_vfob && _rx2_enabled);
+                            _RX2waterfallPreviousMinValue = getWaterfallCachedPreviousMinOrFloor(2, rx2WillBeTx);
+                        }
+
                         PurgeBuffers();
                         _old_mox = value;
                     }
@@ -2592,6 +2603,90 @@ namespace Thetis
         private static ArrayPool<float> m_objFloatPool = ArrayPool<float>.Shared;
         private static ArrayPool<int> m_objIntPool = ArrayPool<int>.Shared;
 
+        private const float WATERFALL_AGC_RESTART_FLOOR_DBM = -150f;
+        private static readonly int[] _currentWaterfallBandByRx = new int[] { int.MinValue, int.MinValue };
+        private static readonly Dictionary<WaterfallAgcCacheKey, WaterfallAgcCacheEntry> _waterfallAgcCache =
+            new Dictionary<WaterfallAgcCacheKey, WaterfallAgcCacheEntry>();
+
+        private struct WaterfallAgcCacheKey : IEquatable<WaterfallAgcCacheKey>
+        {
+            public readonly bool IsTx;
+            public readonly int BandValue;
+
+            public WaterfallAgcCacheKey(bool isTx, int bandValue)
+            {
+                IsTx = isTx;
+                BandValue = bandValue;
+            }
+
+            public bool Equals(WaterfallAgcCacheKey other)
+            {
+                return IsTx == other.IsTx && BandValue == other.BandValue;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is WaterfallAgcCacheKey other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                return (IsTx ? 397 : 211) ^ BandValue;
+            }
+        }
+
+        private struct WaterfallAgcCacheEntry
+        {
+            public float PreviousMin;
+        }
+
+        private static int getWaterfallRxIndex(int rx)
+        {
+            return rx - 1;
+        }
+
+        private static void setCurrentWaterfallBand(int rx, Band band)
+        {
+            int rxIndex = getWaterfallRxIndex(rx);
+            if (rxIndex < 0 || rxIndex >= _currentWaterfallBandByRx.Length) return;
+            _currentWaterfallBandByRx[rxIndex] = (int)band;
+        }
+
+        private static int getWaterfallContextBandValue(int rx, bool isTxContext)
+        {
+            if (!isTxContext)
+            {
+                int rxIndex = getWaterfallRxIndex(rx);
+                if (rxIndex < 0 || rxIndex >= _currentWaterfallBandByRx.Length) return int.MinValue;
+                return _currentWaterfallBandByRx[rxIndex];
+            }
+
+            int txRxIndex = (_tx_on_vfob && _rx2_enabled) ? 1 : 0;
+            if (txRxIndex < 0 || txRxIndex >= _currentWaterfallBandByRx.Length) return int.MinValue;
+            return _currentWaterfallBandByRx[txRxIndex];
+        }
+
+        private static float getWaterfallCachedPreviousMinOrFloor(int rx, bool isTxContext)
+        {
+            int bandValue = getWaterfallContextBandValue(rx, isTxContext);
+            if (bandValue != int.MinValue &&
+                _waterfallAgcCache.TryGetValue(new WaterfallAgcCacheKey(isTxContext, bandValue), out WaterfallAgcCacheEntry entry))
+            {
+                return entry.PreviousMin;
+            }
+
+            return WATERFALL_AGC_RESTART_FLOOR_DBM;
+        }
+
+        private static void updateWaterfallAgcCache(int rx, bool isTxContext, float previousMin)
+        {
+            int bandValue = getWaterfallContextBandValue(rx, isTxContext);
+            if (bandValue == int.MinValue) return;
+
+            _waterfallAgcCache[new WaterfallAgcCacheKey(isTxContext, bandValue)] =
+                new WaterfallAgcCacheEntry { PreviousMin = previousMin };
+        }
+
         private static bool _ignore_waterfall_rx1_agc = false;
         private static bool _ignore_waterfall_rx2_agc = false;
         private static double _rx1_no_agc_duration = 0;
@@ -2832,8 +2927,8 @@ namespace Thetis
             set { m_bStopRX2WaterfallOnTX = value; }
         }
 
-        private static float _RX1waterfallPreviousMinValue = 20;
-        private static float _RX2waterfallPreviousMinValue = 20;
+        private static float _RX1waterfallPreviousMinValue = WATERFALL_AGC_RESTART_FLOOR_DBM;
+        private static float _RX2waterfallPreviousMinValue = WATERFALL_AGC_RESTART_FLOOR_DBM;
         private static void ResetWaterfallBmp()
         {
             int H = displayTargetHeight;
@@ -2872,11 +2967,10 @@ namespace Thetis
                         _waterfall_bmp_dx2d = null;
                     }
                     _waterfall_bmp_dx2d = new SharpDX.Direct2D1.Bitmap(_d2dRenderTarget, new Size2(displayTargetWidth, H - 20), new BitmapProperties(new SDXPixelFormat(_swapChain.Description.ModeDescription.Format, ALPHA_MODE)));
+                    clearWaterfallBitmapRegion(_waterfall_bmp_dx2d, 0, 0, displayTargetWidth, H - 20);
 
                     if (tmp != null)
                     {
-                        clearWaterfallBitmapRegion(_waterfall_bmp_dx2d, 0, 0, displayTargetWidth, H - 20);
-
                         // copy old waterfall into new bitmap
                         _waterfall_bmp_dx2d.CopyFromBitmap(tmp, new SharpDX.Point(0, 0)); // anything outside will be 'ignored'
                         Utilities.Dispose(ref tmp);
@@ -2928,11 +3022,10 @@ namespace Thetis
                         _waterfall_bmp2_dx2d = null;
                     }
                     _waterfall_bmp2_dx2d = new SharpDX.Direct2D1.Bitmap(_d2dRenderTarget, new Size2(displayTargetWidth, H - 20), new BitmapProperties(new SDXPixelFormat(_swapChain.Description.ModeDescription.Format, ALPHA_MODE)));
+                    clearWaterfallBitmapRegion(_waterfall_bmp2_dx2d, 0, 0, displayTargetWidth, H - 20);
 
                     if (tmp != null)
                     {
-                        clearWaterfallBitmapRegion(_waterfall_bmp2_dx2d, 0, 0, displayTargetWidth, H - 20);
-
                         // copy old waterfall into new bitmap
                         _waterfall_bmp2_dx2d.CopyFromBitmap(tmp, new SharpDX.Point(0, 0)); // anything outside will be 'ignored'
                         Utilities.Dispose(ref tmp);
@@ -6053,6 +6146,48 @@ namespace Thetis
             return rx == 2 ? RX2DisplayHigh - RX2DisplayLow : RXDisplayHigh - RXDisplayLow;
         }
 
+        private static bool isWaterfallNoiseFloorCompensationEnabled(int rx)
+        {
+            if (rx == 1)
+                return m_bWaterfallUseNFForACGRX1;
+
+            if (rx == 2)
+                return m_bWaterfallUseNFForACGRX2;
+
+            return false;
+        }
+
+        private static bool useWaterfallNoiseFloorCompensation(int rx)
+        {
+            if (!isWaterfallNoiseFloorCompensationEnabled(rx))
+                return false;
+
+            if (rx == 1)
+            {
+                return !m_bFastAttackNoiseFloorRX1 &&
+                       m_bNoiseFloorGoodRX1;
+            }
+
+            if (rx == 2)
+            {
+                return !m_bFastAttackNoiseFloorRX2 &&
+                       m_bNoiseFloorGoodRX2;
+            }
+
+            return false;
+        }
+
+        private static float getWaterfallNoiseFloorCompensationTarget(int rx)
+        {
+            if (rx == 1)
+                return m_fLerpAverageRX1 - m_fWaterfallAGCOffsetRX1;
+
+            if (rx == 2)
+                return m_fLerpAverageRX2 - m_fWaterfallAGCOffsetRX2;
+
+            return WATERFALL_AGC_RESTART_FLOOR_DBM;
+        }
+
         private static int prepareWaterfallBitmapShift(int rx, int width, double centerMHz, out bool clearBitmap)
         {
             int index = rx == 2 ? 1 : 0;
@@ -6252,6 +6387,9 @@ namespace Thetis
             float waterfall_minimum = 200f;
             ColorScheme cScheme = ColorScheme.enhanced;
             Color low_color = Color.Black;
+            bool useNoiseFloorCompensation = !local_mox && isWaterfallNoiseFloorCompensationEnabled(rx);
+            bool useSettledNoiseFloorCompensation = !local_mox && useWaterfallNoiseFloorCompensation(rx);
+            float noiseFloorCompensationTarget = useNoiseFloorCompensation ? getWaterfallNoiseFloorCompensationTarget(rx) : WATERFALL_AGC_RESTART_FLOOR_DBM;
 
             bool bDoVisualNotch = false;
             int nDecimatedWidth = W / m_nDecimation;
@@ -6259,8 +6397,8 @@ namespace Thetis
             if (console.PowerOn != _old_power)
             {
                 _old_power = console.PowerOn;
-                _RX1waterfallPreviousMinValue = 20;
-                _RX2waterfallPreviousMinValue = 20;
+                _RX1waterfallPreviousMinValue = WATERFALL_AGC_RESTART_FLOOR_DBM;
+                _RX2waterfallPreviousMinValue = WATERFALL_AGC_RESTART_FLOOR_DBM;
             }
 
             if (rx == 2)
@@ -6277,19 +6415,10 @@ namespace Thetis
                     high_threshold = rx2_waterfall_high_threshold;
                     if (rx2_waterfall_agc && !m_bRX2_spectrum_thresholds)
                     {
-                        if (m_bWaterfallUseNFForACGRX2)
-                        {
-                            if (FastAttackNoiseFloorRX2)
+                        if (useNoiseFloorCompensation)
                             {
-                                low_threshold = _RX2waterfallPreviousMinValue;
-                                //note: no adjust if using old value
+                            low_threshold = useSettledNoiseFloorCompensation ? noiseFloorCompensationTarget : _RX2waterfallPreviousMinValue;
                             }
-                            else
-                            {
-                                low_threshold = m_fLerpAverageRX2;
-                                low_threshold -= m_fWaterfallAGCOffsetRX2;
-                            }
-                        }
                         else
                         {
                             low_threshold = _RX2waterfallPreviousMinValue;
@@ -6318,19 +6447,10 @@ namespace Thetis
                     high_threshold = waterfall_high_threshold;
                     if (rx1_waterfall_agc && !m_bRX1_spectrum_thresholds)
                     {
-                        if (m_bWaterfallUseNFForACGRX1)
-                        {
-                            if (FastAttackNoiseFloorRX1)
+                        if (useNoiseFloorCompensation)
                             {
-                                low_threshold = _RX1waterfallPreviousMinValue;
-                                //note: no adjust if using old value
+                            low_threshold = useSettledNoiseFloorCompensation ? noiseFloorCompensationTarget : _RX1waterfallPreviousMinValue;
                             }
-                            else
-                            {
-                                low_threshold = m_fLerpAverageRX1;
-                                low_threshold -= m_fWaterfallAGCOffsetRX1;
-                            }
-                        }
                         else
                         {
                             low_threshold = _RX1waterfallPreviousMinValue;
@@ -6541,10 +6661,11 @@ namespace Thetis
                         clearWaterfallBitmapRegion(waterfallBitmap, 0, 0, W, (int)waterfallBitmap.Size.Height);
                     }
 
-                    topPixels = new SharpDX.Direct2D1.Bitmap(_d2dRenderTarget, new Size2((int)waterfallBitmap.Size.Width, (int)waterfallBitmap.Size.Height - 1),
+                    int preservedBitmapHeight = (int)waterfallBitmap.Size.Height - (addRow ? 1 : 0);
+                    topPixels = new SharpDX.Direct2D1.Bitmap(_d2dRenderTarget, new Size2((int)waterfallBitmap.Size.Width, preservedBitmapHeight),
                         new BitmapProperties(new SDXPixelFormat(waterfallBitmap.PixelFormat.Format, ALPHA_MODE)));
 
-                    topPixels.CopyFromBitmap(waterfallBitmap, new SharpDX.Point(0, 0), new SharpDX.Rectangle(0, 0, (int)topPixels.Size.Width, (int)topPixels.Size.Height));
+                    topPixels.CopyFromBitmap(waterfallBitmap, new SharpDX.Point(0, 0), new SharpDX.Rectangle(0, 0, (int)topPixels.Size.Width, preservedBitmapHeight));
 
                     #region colours
                     switch (cScheme)
@@ -7468,25 +7589,26 @@ namespace Thetis
                         }
 
                         int copyWidth = W - Math.Abs(horizontalShiftPixels);
+                        int shiftedRowTop = addRow ? 1 : 0;
                         if (copyWidth > 0)
                         {
                             int sourceX = horizontalShiftPixels < 0 ? -horizontalShiftPixels : 0;
                             int destX = horizontalShiftPixels > 0 ? horizontalShiftPixels : 0;
-                            waterfallBitmap.CopyFromBitmap(topPixels, new SharpDX.Point(destX, addRow ? 1 : 0),
-                                new SharpDX.Rectangle(sourceX, 0, copyWidth, (int)topPixels.Size.Height));
+                            waterfallBitmap.CopyFromBitmap(topPixels, new SharpDX.Point(destX, shiftedRowTop),
+                                new SharpDX.Rectangle(sourceX, 0, copyWidth, preservedBitmapHeight));
                         }
 
                         if (horizontalShiftPixels > 0)
                         {
-                            clearWaterfallBitmapRegion(waterfallBitmap, 0, 1, horizontalShiftPixels, (int)topPixels.Size.Height);
+                            clearWaterfallBitmapRegion(waterfallBitmap, 0, shiftedRowTop, horizontalShiftPixels, preservedBitmapHeight);
                         }
                         else if (horizontalShiftPixels < 0)
                         {
-                            clearWaterfallBitmapRegion(waterfallBitmap, W + horizontalShiftPixels, 1, -horizontalShiftPixels, (int)topPixels.Size.Height);
+                            clearWaterfallBitmapRegion(waterfallBitmap, W + horizontalShiftPixels, shiftedRowTop, -horizontalShiftPixels, preservedBitmapHeight);
                         }
                         else if (copyWidth <= 0)
                         {
-                            clearWaterfallBitmapRegion(waterfallBitmap, 0, 1, W, (int)topPixels.Size.Height);
+                            clearWaterfallBitmapRegion(waterfallBitmap, 0, shiftedRowTop, W, preservedBitmapHeight);
                         }
 
                         if (addRow)
@@ -7516,9 +7638,9 @@ namespace Thetis
 
                         if (rx == 1)
                         {
-                            if (rx1_waterfall_agc && !m_bRX1_spectrum_thresholds && m_bWaterfallUseNFForACGRX1)
+                            if (rx1_waterfall_agc && !m_bRX1_spectrum_thresholds && useNoiseFloorCompensation)
                             {
-                                _RX1waterfallPreviousMinValue = (_RX1waterfallPreviousMinValue * 0.6f) + (low_threshold * 0.4f);
+                                _RX1waterfallPreviousMinValue = (_RX1waterfallPreviousMinValue * 0.6f) + (noiseFloorCompensationTarget * 0.4f);
                             }
                             else
                             {
@@ -7527,15 +7649,24 @@ namespace Thetis
                         }
                         else
                         {
-                            if (rx2_waterfall_agc && !m_bRX2_spectrum_thresholds && m_bWaterfallUseNFForACGRX2)
+                            if (rx2_waterfall_agc && !m_bRX2_spectrum_thresholds && useNoiseFloorCompensation)
                             {
-                                _RX2waterfallPreviousMinValue = (_RX2waterfallPreviousMinValue * 0.6f) + (low_threshold * 0.4f);
+                                _RX2waterfallPreviousMinValue = (_RX2waterfallPreviousMinValue * 0.6f) + (noiseFloorCompensationTarget * 0.4f);
                             }
                             else
                             {
                                 _RX2waterfallPreviousMinValue = (_RX2waterfallPreviousMinValue * 0.6f) + (waterfall_minimum * 0.4f);
                             }
                         }
+                    }
+
+                    if (!local_mox)
+                    {
+                        updateWaterfallAgcCache(rx, false, rx == 1 ? _RX1waterfallPreviousMinValue : _RX2waterfallPreviousMinValue);
+                    }
+                    else
+                    {
+                        updateWaterfallAgcCache(rx, true, rx == 1 ? _RX1waterfallPreviousMinValue : _RX2waterfallPreviousMinValue);
                     }
                 }
 
