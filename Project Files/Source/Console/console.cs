@@ -25959,6 +25959,40 @@ namespace Thetis
         private bool mon_recall = false;
         private static readonly HiPerfTimer vox_timer = new HiPerfTimer();
 
+        private PTTMode getFallbackPTTModeAfterTCIRelease(DSPMode tx_mode, bool mic_ptt, bool cw_ptt, bool cat_ptt, bool vox_ptt)
+        {
+            if (cat_ptt)
+                return PTTMode.CAT;
+
+            if ((tx_mode == DSPMode.CWL || tx_mode == DSPMode.CWU) && (cw_ptt || mic_ptt))
+                return PTTMode.CW;
+
+            if ((tx_mode == DSPMode.LSB ||
+                tx_mode == DSPMode.USB ||
+                tx_mode == DSPMode.DSB ||
+                tx_mode == DSPMode.AM ||
+                tx_mode == DSPMode.SAM ||
+                tx_mode == DSPMode.DIGU ||
+                tx_mode == DSPMode.DIGL ||
+                tx_mode == DSPMode.FM ||
+                _all_mode_mic_ptt) &&
+                mic_ptt)
+                return PTTMode.MIC;
+
+            if ((tx_mode == DSPMode.LSB ||
+                tx_mode == DSPMode.USB ||
+                tx_mode == DSPMode.DSB ||
+                tx_mode == DSPMode.AM ||
+                tx_mode == DSPMode.SAM ||
+                tx_mode == DSPMode.DIGU ||
+                tx_mode == DSPMode.DIGL ||
+                tx_mode == DSPMode.FM) &&
+                vox_ptt)
+                return PTTMode.VOX;
+
+            return PTTMode.NONE;
+        }
+
         private async void PollPTT()
         {
             while (chkPower.Checked)
@@ -26059,11 +26093,24 @@ namespace Thetis
                         switch (_current_ptt_mode)
                         {
                             case PTTMode.TCI:
-                                if (!_tci_ptt)
+                                if (_tci_ptt)
                                 {
-                                    chkMOX.Checked = false;
+                                    vac_bypass_disable = true;
                                 }
-                                vac_bypass_disable = true;
+                                else
+                                {
+                                    PTTMode fallbackMode = getFallbackPTTModeAfterTCIRelease(tx_mode, mic_ptt, cw_ptt, cat_ptt, vox_ptt);
+                                    if (fallbackMode == PTTMode.NONE)
+                                    {
+                                        chkMOX.Checked = false;
+                                        vac_bypass_disable = true;
+                                    }
+                                    else
+                                    {
+                                        _current_ptt_mode = fallbackMode;
+                                        vac_bypass_disable = fallbackMode == PTTMode.CAT;
+                                    }
+                                }
                                 break;
                             case PTTMode.CAT:
                                 if (!cat_ptt)
@@ -45893,13 +45940,16 @@ namespace Thetis
         public delegate void AGCAutoModeChanged(int rx, bool old_state, bool new_state);
         public delegate void GeneralSettingsChanged(int rx, OtherButtonId setting, bool old_state, bool new_state, Dictionary<OtherButtonId, bool> settings);
         public delegate void SQLChanged(int rx, SquelchState old_state, SquelchState new_state);
-        public delegate void CWXSpeedChanged(int old_speed, int new_speed);
-        public delegate void CWXDelayChanged(int old_delay_ms, int new_delay_ms);
-        public delegate void CWKeyerSpeedChanged(int old_speed, int new_speed);
-        public delegate void CWXShown(bool shown);
+
         public delegate void GlobalKeyPress(Keys keycode);
         public delegate void DarkModeChanged(bool dark_mode);
         public delegate void RXGainChanged(int rx, bool is_subrx, int old_gain, int new_gain);
+
+        public delegate void CWXSpeedChanged(int old_speed, int new_speed);
+        public delegate void CWXDelayChanged(int old_delay_ms, int new_delay_ms);
+        public delegate void CWXRemoteCharacterStarted(int remaining_remote_characters, int pending_elements);
+        public delegate void CWKeyerSpeedChanged(int old_speed, int new_speed);
+        public delegate void CWXShown(bool shown);
 
         public BandPreChange BandPreChangeHandlers; // when someone clicks a band button, before a change is made
         public BandNoChange BandNoChangeHandlers;
@@ -46047,10 +46097,6 @@ namespace Thetis
         public AGCAutoModeChanged AGCAutoModeChangedHandlers;
         public GeneralSettingsChanged GeneralSettingsChangedHandlers;
         public SQLChanged SQLChangedHandlers;
-        public CWXSpeedChanged CWXSpeedChangedHandlers;
-        public CWXDelayChanged CWXDelayChangedHandlers;
-        public CWKeyerSpeedChanged CWKeyerSpeedChangedHandlers;
-        public CWXShown CWXShownHandlers;
 
         public GlobalKeyPress GlobalKeyPressUpHandlers;
         public GlobalKeyPress GlobalKeyPressDownHandlers;
@@ -46058,6 +46104,12 @@ namespace Thetis
         public DarkModeChanged DarkModeChangedHandlers;
 
         public RXGainChanged RXGainChangedHandlers;
+
+        public CWXSpeedChanged CWXSpeedChangedHandlers;
+        public CWXDelayChanged CWXDelayChangedHandlers;
+        public CWXRemoteCharacterStarted CWXRemoteCharacterStartedHandlers;
+        public CWKeyerSpeedChanged CWKeyerSpeedChangedHandlers;
+        public CWXShown CWXShownHandlers;
 
         private bool m_bIgnoreFrequencyDupes = false;               // if an update is to be made, but the frequency is already in the filter, ignore it
         private bool m_bHideBandstackWindowOnSelect = false;        // hide the window if an entry is selected
