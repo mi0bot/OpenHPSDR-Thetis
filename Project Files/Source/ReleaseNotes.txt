@@ -2,6 +2,12 @@ This is the Thetis version for the Hermes Lite 2.
 
 Please report any bugs on [GitHub here](https://github.com/mi0bot/OpenHPSDR-Thetis/issues/new/choose).
 
+# 2.10.3.13 Beta 2 (2026-04-01)
+
+- Upgraded to latest released codebase of official Thetis
+- Added ability to swap audio channels sent to hardware (Not tested)
+- Corrected warning of incorrect SetPk value in PS form
+
 # 2.10.3.13 Beta 1 (2026-02-16)
 
 - Upgraded to latest development codebase of official Thetis
