@@ -233,7 +233,8 @@ namespace Thetis
 
         private void ucCFC_comp_PointsChanged(object sender, ucParametricEq.EqDraggingEventArgs e)
         {
-
+            if (e.IsDragging) return;
+            setCFCProfile();
         }
 
         private void ucCFC_comp_PointSelected(object sender, ucParametricEq.EqPointSelectionChangedEventArgs e)
@@ -283,7 +284,8 @@ namespace Thetis
 
         private void ucCFC_eq_PointsChanged(object sender, ucParametricEq.EqDraggingEventArgs e)
         {
-
+            if (e.IsDragging) return;
+            setCFCProfile();
         }
 
         private void ucCFC_eq_PointSelected(object sender, ucParametricEq.EqPointSelectionChangedEventArgs e)
@@ -370,12 +372,21 @@ namespace Thetis
 
             int nfreqs = cf.Length;
 
+            bool use_q = ucCFC_comp.ParametricEQ && ucCFC_eq.ParametricEQ;
+
             //profile
             unsafe
             {
                 fixed (double* Fptr = &cf[0], Gptr = &cg[0], Eptr = &eg[0], GQptr = &cq[0], EQptr = &eq[0])
                 {
-                    WDSP.SetTXACFCOMPprofile(WDSP.id(1, 0), nfreqs, Fptr, Gptr, Eptr, GQptr, EQptr);
+                    if (use_q)
+                    {
+                        WDSP.SetTXACFCOMPprofile(WDSP.id(1, 0), nfreqs, Fptr, Gptr, Eptr, GQptr, EQptr);
+                    }
+                    else
+                    {
+                        WDSP.SetTXACFCOMPprofile(WDSP.id(1, 0), nfreqs, Fptr, Gptr, Eptr, null, null);
+                    }
                 }
             }
         }
@@ -439,12 +450,14 @@ namespace Thetis
 
         private void btnResetComp_Click(object sender, EventArgs e)
         {
+            ucCFC_comp.SelectedIndex = -1;
             ucCFC_comp.GlobalGainDb = 0;
             ucCFC_comp.ResetPoints();
         }
 
         private void btnResetEQ_Click(object sender, EventArgs e)
         {
+            ucCFC_eq.SelectedIndex = -1;
             ucCFC_eq.GlobalGainDb = 0;
             ucCFC_eq.ResetPoints();
         }
