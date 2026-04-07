@@ -11679,7 +11679,7 @@
             this.labelOutState.Name = "labelOutState";
             this.labelOutState.Size = new System.Drawing.Size(140, 16);
             this.labelOutState.TabIndex = 203;
-            this.labelOutState.Text = "o0  o1 o2 o3 o4 o5  o6 o7";
+            this.labelOutState.Text = "o1 o2 o3  o4 o5 o6  o7 o8";
             // 
             // ucOutPinsLedStripHF
             // 
