@@ -1,4 +1,8 @@
-# Latest Release v2.10.3.13 Beta 2 1st April, 2026
+# Latest Release v2.10.3.13 21st April, 2026
+
+# 2.10.3.13 (2026-04-21)
+
+- Updated to release status
 
 # 2.10.3.13 Beta 2 (2026-04-01)
 
