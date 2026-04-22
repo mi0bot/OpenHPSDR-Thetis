@@ -6587,11 +6587,13 @@ namespace Thetis
             }
 
             if (HardwareSpecific.Model == HPSDRModel.HERMES ||
+                HardwareSpecific.Model == HPSDRModel.HERMESLITE ||
                 HardwareSpecific.Model == HPSDRModel.ANAN7000D || HardwareSpecific.Model == HPSDRModel.ANAN8000D ||
                 HardwareSpecific.Model == HPSDRModel.ANVELINAPRO3 ||
                 HardwareSpecific.Model == HPSDRModel.ANAN_G2 || HardwareSpecific.Model == HPSDRModel.ANAN_G2_1K ||
+               HardwareSpecific.Model == HPSDRModel.REDPITAYA    || //DH1KLM
                 HardwareSpecific.Model == HPSDRModel.REDPITAYA || HardwareSpecific.Model == HPSDRModel.ANAN_G1) //DH1KLM  //N1GP G1 added
-                HardwareSpecific.Model == HPSDRModel.HERMESLITE)
+
             {
                 if (!tcGeneral.TabPages.Contains(tpOtherHW))
                 {
@@ -21065,8 +21067,8 @@ namespace Thetis
             switch (HardwareSpecific.Model)
             {
                 case HPSDRModel.HERMES:
-                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.HERMESLITE:         // MI0BOT: HL2
+                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.ANAN10:
                 case HPSDRModel.ANAN10E:
                 case HPSDRModel.ANAN100:
@@ -21244,8 +21246,8 @@ namespace Thetis
             switch (HardwareSpecific.Model)
             {
                 case HPSDRModel.HERMES:
-                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.HERMESLITE:
+                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.ANAN10:
                 case HPSDRModel.ANAN10E:
                 case HPSDRModel.ANAN100:
@@ -21275,8 +21277,8 @@ namespace Thetis
             switch (HardwareSpecific.Model)
             {
                 case HPSDRModel.HERMES:
-                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.HERMESLITE:
+                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.ANAN10:
                 case HPSDRModel.ANAN10E:
                 case HPSDRModel.ANAN100:

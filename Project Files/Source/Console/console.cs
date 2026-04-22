@@ -8415,8 +8415,8 @@ namespace Thetis
                     }
                     break;
                 case HPSDRModel.HERMES:
-                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.HERMESLITE:     // MI0BOT: HL2
+                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.ANAN10:
                 case HPSDRModel.ANAN100:
                     P1_rxcount = 4;                     // RX4 used for puresignal feedback
@@ -8742,8 +8742,8 @@ namespace Thetis
                         break;
                     //                    case HPSDRHW.Atlas: /// ???
                     case HPSDRHW.Hermes: // ANAN-10 ANAN-100 Heremes (4 adc)
-                    case HPSDRHW.HermesIII: // ANAN-G1
                     case HPSDRHW.HermesLite: // MI0BOT: Hermes Lite 2
+                    case HPSDRHW.HermesIII: // ANAN-G1
                         switch (tot)
                         {
                             case 0: // off off off
@@ -15538,8 +15538,8 @@ namespace Thetis
             switch (HardwareSpecific.Model)
             {
                 case HPSDRModel.HERMES:
-                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.HERMESLITE:     // MI0BOT: HL2
+                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.ANAN10:
                 case HPSDRModel.ANAN10E:
                 case HPSDRModel.ANAN100:
@@ -28287,8 +28287,8 @@ namespace Thetis
                             break;
                         // 4 & 5 DDC Models
                         case HPSDRModel.HERMES:
-                        case HPSDRModel.ANAN_G1: //
                         case HPSDRModel.HERMESLITE:     // MI0BOT: HL2
+                        case HPSDRModel.ANAN_G1: //
                         case HPSDRModel.ANAN10:
                         case HPSDRModel.ANAN100:
                         case HPSDRModel.ANAN100D:
@@ -28307,8 +28307,8 @@ namespace Thetis
                     {
                         // 2-DDC Models
                         case HPSDRModel.HERMES:
-                        case HPSDRModel.ANAN_G1: //N1GP G1 added
                         case HPSDRModel.HERMESLITE:         // MI0BOT: HL2
+                        case HPSDRModel.ANAN_G1: //N1GP G1 added
                         case HPSDRModel.ANAN10E:
                         case HPSDRModel.ANAN10:
                         case HPSDRModel.ANAN100B:
@@ -33360,8 +33360,8 @@ namespace Thetis
                 }
 
                if (_mox && (HardwareSpecific.Hardware == HPSDRHW.Hermes ||
-                            HardwareSpecific.Hardware == HPSDRHW.HermesII ||
                             HardwareSpecific.Hardware == HPSDRHW.HermesLite ||
+                            HardwareSpecific.Hardware == HPSDRHW.HermesII ||
                             HardwareSpecific.Hardware == HPSDRHW.HermesIII))
                 {
                     if (chkVFOSplit.Checked)
@@ -33393,8 +33393,8 @@ namespace Thetis
                 if (_mox)
                 {
                     if (HardwareSpecific.Hardware == HPSDRHW.Hermes ||
-                         HardwareSpecific.Hardware == HPSDRHW.HermesII ||
                          HardwareSpecific.Hardware == HPSDRHW.HermesLite ||
+                         HardwareSpecific.Hardware == HPSDRHW.HermesII ||
                          HardwareSpecific.Hardware == HPSDRHW.HermesIII)
                     {
                         if (chkVFOSplit.Checked)
