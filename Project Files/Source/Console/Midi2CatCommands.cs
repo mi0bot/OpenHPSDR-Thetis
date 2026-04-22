@@ -39,6 +39,10 @@ by Chris Codella, W2PA, April 2017.  Indicated by //-W2PA comment lines.
 // Richard Samphire can be reached by email at :  mw0lge@grange-lane.co.uk                    //
 //============================================================================================//
 
+//////////////
+// 2023-26 : modified by MI0BOT for HL2 support. Please see any code commented with my callsign for details
+//////////////
+
 using Midi2Cat;
 using Midi2Cat.Data; 
 using System;

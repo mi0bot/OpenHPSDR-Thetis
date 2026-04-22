@@ -55,6 +55,10 @@
 
 // Migrated to VS2026 - 18/12/25 MW0LGE v2.10.3.12
 
+//////////////
+// 2023-26 : modified by MI0BOT for HL2 support. Please see any code commented with my callsign for details
+//////////////
+
 using Midi2Cat.Data; //-W2PA Necessary for Behringer MIDI changes
 
 namespace Thetis

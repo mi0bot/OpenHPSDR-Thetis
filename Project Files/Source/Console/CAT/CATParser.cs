@@ -20,6 +20,9 @@
 // You may contact the author via email at: k5kdn@arrl.net
 //=================================================================
 
+//////////////
+// 2023-26 : modified by MI0BOT for HL2 support. Please see any code commented with my callsign for details
+//////////////
 
 using System;
 using System.Xml;
