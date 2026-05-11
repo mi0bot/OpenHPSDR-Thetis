@@ -12357,55 +12357,7 @@ namespace Thetis
         }
         private void txtGenCustomTitle_TextChanged(object sender, System.EventArgs e)
         {
-            //if (HPSDRModel.HERMESLITE != HardwareSpecific.Model)
-            //{
-            //    console.CustomTitle = txtGenCustomTitle.Lines[0];
-            //}
-            //else
-            //{   // MI0BOT: Handle multi line box for display of different IP address
-            //    string remotePort = NetworkIO.EthernetRemotePort == 0 ? "" : ":" + NetworkIO.EthernetRemotePort.ToString();
-            //    int line = 0;
-            //    string ipAddress = "";
-
-            //    if (chkEnableStaticIP.Checked)
-            //    {
-            //        if (radStaticIP1.Checked)
-            //            line = 1;
-            //        else if (radStaticIP2.Checked)
-            //            line = 2;
-            //        else if (radStaticIP3.Checked)
-            //            line = 3;
-            //        else if (radStaticIP4.Checked)
-            //            line = 4;
-
-            //        ipAddress = console.HPSDRNetworkIPAddr;
-            //    }
-            //    else
-            //    {
-            //        line = 0;
-            //        ipAddress = NetworkIO.HpSdrHwIpAddress.ToString();
-            //    }
-
-            //    if ((txtGenCustomTitle.Lines.Length - 1) < line)
-            //        line = 0;
-
-            //    if (chkDisplayIPPort.Checked)
-            //        if (line == 0)
-            //            if (txtGenCustomTitle.Lines.Length == 0)
-            //                console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Text;
-            //            else
-            //                console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Lines[0];
-            //        else
-            //            console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Lines[line] + "   " + txtGenCustomTitle.Lines[0];
-            //    else
-            //        if (line == 0)
-            //        if (txtGenCustomTitle.Lines.Length == 0)
-            //            console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Text;
-            //        else
-            //            console.CustomTitle = ipAddress + remotePort + "   " + txtGenCustomTitle.Lines[0];
-            //    else
-            //        console.CustomTitle = txtGenCustomTitle.Lines[line] + "   " + txtGenCustomTitle.Lines[0];
-            //}
+            console.CustomTitle = txtGenCustomTitle.Text;
         }
 
         private void chkGenAllModeMicPTT_CheckedChanged(object sender, System.EventArgs e)
@@ -20424,13 +20376,6 @@ namespace Thetis
                     chkCATtoVFOB.Enabled = true;
                     chkCATtoVFOB.Visible = true;
 
-                    txtGenCustomTitle.MaxLength = 100;
-                    txtGenCustomTitle.Multiline = true;
-                    txtGenCustomTitle.WordWrap = false;
-                    txtGenCustomTitle.TextChanged += new System.EventHandler(this.txtGenCustomTitle_TextChanged);
-                    txtGenCustomTitle.MouseEnter += new System.EventHandler(this.txtGenCustomTitle_MouseEnter);
-                    txtGenCustomTitle.MouseLeave += new System.EventHandler(this.txtGenCustomTitle_MouseLeave);
-
                     grpIOPinState.Enabled = true;
                     grpIOPinState.Visible = true;
                     ucIOPinsLedStripHF.Enabled = true;
@@ -28302,19 +28247,6 @@ namespace Thetis
         private void chkDisplayIPPort_CheckedChanged(object sender, EventArgs e)
         {
             txtGenCustomTitle_TextChanged(sender, e);
-        }
-        private void txtGenCustomTitle_MouseEnter(object sender, EventArgs e)
-        {
-            grpGenCustomTitleText.Height *= 2;
-            grpGenCustomTitleText.BringToFront();
-            txtGenCustomTitle.Height *= 4;
-        }
-
-        private void txtGenCustomTitle_MouseLeave(object sender, EventArgs e)
-        {
-            txtGenCustomTitle.Height /= 4;
-            grpGenCustomTitleText.Height /= 2;
-            grpGenCustomTitleText.SendToBack();
         }
 
         private void btnClearTCISpots_Click(object sender, EventArgs e)
