@@ -2,6 +2,10 @@ This is the Thetis version for the Hermes Lite 2.
 
 Please report any bugs on [GitHub here](https://github.com/mi0bot/OpenHPSDR-Thetis/issues/new/choose).
 
+# 2.10.3.14 HL2 (2026-05-13)
+
+- Fixed non display of custom title
+
 # 2.10.3.14 HL2 Beta 1 (2026-04-25)
 
 - Upgraded to release 2.10.3.14 of official Thetis
